@@ -3,25 +3,22 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
- * @package   Zend_Log
  */
 
 namespace ZendTest\Log;
 
-use Zend\Log\Processor\Backtrace;
-
+use Exception;
+use ErrorException;
 use Zend\Log\Logger;
+use Zend\Log\Processor\Backtrace;
 use Zend\Log\Writer\Mock as MockWriter;
 use Zend\Log\Filter\Mock as MockFilter;
 use Zend\Stdlib\SplPriorityQueue;
 use Zend\Validator\Digits as DigitsFilter;
 
 /**
- * @category   Zend
- * @package    Zend_Log
- * @subpackage UnitTests
  * @group      Zend_Log
  */
 class LoggerTest extends \PHPUnit_Framework_TestCase
@@ -253,12 +250,18 @@ class LoggerTest extends \PHPUnit_Framework_TestCase
         $writer = new MockWriter;
         $this->logger->addWriter($writer);
 
-        $this->assertTrue(Logger::registerErrorHandler($this->logger));
+        $previous = Logger::registerErrorHandler($this->logger);
+        $this->assertNotNull($previous);
+        $this->assertTrue(false !== $previous);
+
         // check for single error handler instance
         $this->assertFalse(Logger::registerErrorHandler($this->logger));
+
         // generate a warning
-        echo $test;
+        echo $test; // $test is not defined
+
         Logger::unregisterErrorHandler();
+
         $this->assertEquals($writer->events[0]['message'], 'Undefined variable: test');
     }
 
@@ -325,5 +328,42 @@ class LoggerTest extends \PHPUnit_Framework_TestCase
 
         $this->logger->log(Logger::ERR, 'foo');
         $this->assertEquals(__FILE__, $writer->events[0]['extra']['file']);
+    }
+
+    public function testExceptionHandler()
+    {
+        $writer = new MockWriter;
+        $this->logger->addWriter($writer);
+
+        $this->assertTrue(Logger::registerExceptionHandler($this->logger));
+
+        // check for single error handler instance
+        $this->assertFalse(Logger::registerExceptionHandler($this->logger));
+
+        // get the internal exception handler
+        $exceptionHandler = set_exception_handler(function ($e) {});
+        set_exception_handler($exceptionHandler);
+
+        // reset the exception handler
+        Logger::unregisterExceptionHandler();
+
+        // call the exception handler
+        $exceptionHandler(new Exception('error', 200, new Exception('previos', 100)));
+        $exceptionHandler(new ErrorException('user notice', 1000, E_USER_NOTICE, __FILE__, __LINE__));
+
+        // check logged messages
+        $expectedEvents = array(
+            array('priority' => Logger::ERR,    'message' => 'previos',     'file' => __FILE__),
+            array('priority' => Logger::ERR,    'message' => 'error',       'file' => __FILE__),
+            array('priority' => Logger::NOTICE, 'message' => 'user notice', 'file' => __FILE__),
+        );
+        for ($i = 0; $i < count($expectedEvents); $i++) {
+            $expectedEvent = $expectedEvents[$i];
+            $event         = $writer->events[$i];
+
+            $this->assertEquals($expectedEvent['priority'], $event['priority'], 'Unexpected priority');
+            $this->assertEquals($expectedEvent['message'], $event['message'], 'Unexpected message');
+            $this->assertEquals($expectedEvent['file'], $event['extra']['file'], 'Unexpected file');
+        }
     }
 }

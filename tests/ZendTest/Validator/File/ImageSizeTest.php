@@ -3,9 +3,8 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
- * @package   Zend_Validator
  */
 
 namespace ZendTest\Validator\File;
@@ -13,9 +12,6 @@ namespace ZendTest\Validator\File;
 use Zend\Validator\File;
 
 /**
- * @category   Zend
- * @package    Zend_Validator_File
- * @subpackage UnitTests
  * @group      Zend_Validator
  */
 class ImageSizeTest extends \PHPUnit_Framework_TestCase
@@ -108,6 +104,29 @@ class ImageSizeTest extends \PHPUnit_Framework_TestCase
             }
             foreach ($messageKeys as $messageKey) {
                 $this->assertTrue(array_key_exists($messageKey, $validator->getMessages()));
+            }
+        }
+    }
+
+    /**
+     * Ensures that the validator follows expected behavior for legacy Zend\Transfer API
+     *
+     * @dataProvider basicBehaviorDataProvider
+     * @return void
+     */
+    public function testLegacy($options, $isValidParam, $expected, $messageKeys)
+    {
+        // Test legacy Zend\Transfer API
+        if (is_array($isValidParam)) {
+            $validator = new File\ImageSize($options);
+            $this->assertEquals($expected, $validator->isValid($isValidParam['tmp_name'], $isValidParam));
+            if (!$expected) {
+                if (!is_array($messageKeys)) {
+                    $messageKeys = array($messageKeys);
+                }
+                foreach ($messageKeys as $messageKey) {
+                    $this->assertTrue(array_key_exists($messageKey, $validator->getMessages()));
+                }
             }
         }
     }

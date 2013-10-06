@@ -3,9 +3,8 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
- * @package   Zend_InputFilter
  */
 
 namespace ZendTest\InputFilter;
@@ -74,20 +73,26 @@ class BaseInputFilterTest extends TestCase
         $foo = new Input();
         $foo->getFilterChain()->attachByName('stringtrim')
                               ->attachByName('alpha');
-        $foo->getValidatorChain()->addValidator(new Validator\StringLength(3, 6));
+        $foo->getValidatorChain()->attach(new Validator\StringLength(3, 6));
 
         $bar = new Input();
         $bar->getFilterChain()->attachByName('stringtrim');
-        $bar->getValidatorChain()->addValidator(new Validator\Digits());
+        $bar->getValidatorChain()->attach(new Validator\Digits());
 
         $baz = new Input();
         $baz->setRequired(false);
         $baz->getFilterChain()->attachByName('stringtrim');
-        $baz->getValidatorChain()->addValidator(new Validator\StringLength(1, 6));
+        $baz->getValidatorChain()->attach(new Validator\StringLength(1, 6));
+
+        $qux = new Input();
+        $qux->setAllowEmpty(true);
+        $qux->getFilterChain()->attachByName('stringtrim');
+        $qux->getValidatorChain()->attach(new Validator\StringLength(5, 6));
 
         $filter->add($foo, 'foo')
                ->add($bar, 'bar')
                ->add($baz, 'baz')
+               ->add($qux, 'qux')
                ->add($this->getChildInputFilter(), 'nest');
 
         return $filter;
@@ -100,16 +105,16 @@ class BaseInputFilterTest extends TestCase
         $foo = new Input();
         $foo->getFilterChain()->attachByName('stringtrim')
                               ->attachByName('alpha');
-        $foo->getValidatorChain()->addValidator(new Validator\StringLength(3, 6));
+        $foo->getValidatorChain()->attach(new Validator\StringLength(3, 6));
 
         $bar = new Input();
         $bar->getFilterChain()->attachByName('stringtrim');
-        $bar->getValidatorChain()->addValidator(new Validator\Digits());
+        $bar->getValidatorChain()->attach(new Validator\Digits());
 
         $baz = new Input();
         $baz->setRequired(false);
         $baz->getFilterChain()->attachByName('stringtrim');
-        $baz->getValidatorChain()->addValidator(new Validator\StringLength(1, 6));
+        $baz->getValidatorChain()->attach(new Validator\StringLength(1, 6));
 
         $filter->add($foo, 'foo')
                ->add($bar, 'bar')
@@ -117,34 +122,74 @@ class BaseInputFilterTest extends TestCase
         return $filter;
     }
 
-    public function testCanValidateEntireDataset()
+    public function dataSets()
+    {
+        return array(
+            'valid-with-empty-and-null' => array(
+                array(
+                    'foo' => ' bazbat ',
+                    'bar' => '12345',
+                    'baz' => null,
+                    'qux' => '',
+                    'nest' => array(
+                        'foo' => ' bazbat ',
+                        'bar' => '12345',
+                        'baz' => null,
+                    ),
+                ),
+                true,
+            ),
+            'valid-with-empty' => array(
+                array(
+                    'foo' => ' bazbat ',
+                    'bar' => '12345',
+                    'qux' => '',
+                    'nest' => array(
+                        'foo' => ' bazbat ',
+                        'bar' => '12345',
+                    ),
+                ),
+                true,
+            ),
+            'invalid-with-empty-and-missing' => array(
+                array(
+                    'foo' => ' bazbat ',
+                    'bar' => '12345',
+                    'baz' => 'thisistoolong',
+                    'nest' => array(
+                        'foo' => ' bazbat ',
+                        'bar' => '12345',
+                        'baz' => 'thisistoolong',
+                    ),
+                ),
+                false,
+            ),
+            'invalid-with-empty' => array(
+                array(
+                    'foo' => ' baz bat ',
+                    'bar' => 'abc45',
+                    'baz' => ' ',
+                    'qux' => ' ',
+                    'nest' => array(
+                        'foo' => ' baz bat ',
+                        'bar' => '123ab',
+                        'baz' => ' ',
+                    ),
+                ),
+                false,
+            ),
+        );
+    }
+
+    /**
+     * @dataProvider dataSets
+     * @group fmlife
+     */
+    public function testCanValidateEntireDataset($dataset, $expected)
     {
         $filter = $this->getInputFilter();
-        $validData = array(
-            'foo' => ' bazbat ',
-            'bar' => '12345',
-            'baz' => '',
-            'nest' => array(
-                'foo' => ' bazbat ',
-                'bar' => '12345',
-                'baz' => '',
-            ),
-        );
-        $filter->setData($validData);
-        $this->assertTrue($filter->isValid());
-
-        $invalidData = array(
-            'foo' => ' baz bat ',
-            'bar' => 'abc45',
-            'baz' => ' ',
-            'nest' => array(
-                'foo' => ' baz bat ',
-                'bar' => '123ab',
-                'baz' => ' ',
-            ),
-        );
-        $filter->setData($invalidData);
-        $this->assertFalse($filter->isValid());
+        $filter->setData($dataset);
+        $this->assertSame($expected, $filter->isValid());
     }
 
     public function testCanValidatePartialDataset()
@@ -227,11 +272,10 @@ class BaseInputFilterTest extends TestCase
         $validData = array(
             'foo' => ' bazbat ',
             'bar' => '12345',
-            'baz' => '',
+            'qux' => '',
             'nest' => array(
                 'foo' => ' bazbat ',
                 'bar' => '12345',
-                'baz' => '',
             ),
         );
         $filter->setData($validData);
@@ -239,11 +283,12 @@ class BaseInputFilterTest extends TestCase
         $expected = array(
             'foo' => 'bazbat',
             'bar' => '12345',
-            'baz' => '',
+            'baz' => null,
+            'qux' => '',
             'nest' => array(
                 'foo' => 'bazbat',
                 'bar' => '12345',
-                'baz' => '',
+                'baz' => null,
             ),
         );
         $this->assertEquals($expected, $filter->getValues());
@@ -255,11 +300,12 @@ class BaseInputFilterTest extends TestCase
         $validData = array(
             'foo' => ' bazbat ',
             'bar' => '12345',
-            'baz' => '',
+            'baz' => null,
+            'qux' => '',
             'nest' => array(
                 'foo' => ' bazbat ',
                 'bar' => '12345',
-                'baz' => '',
+                'baz' => null,
             ),
         );
         $filter->setData($validData);
@@ -343,14 +389,14 @@ class BaseInputFilterTest extends TestCase
 
         $store = new stdClass;
         $foo   = new Input();
-        $foo->getValidatorChain()->addValidator(new Validator\Callback(function ($value, $context) use ($store) {
+        $foo->getValidatorChain()->attach(new Validator\Callback(function ($value, $context) use ($store) {
             $store->value   = $value;
             $store->context = $context;
             return true;
         }));
 
         $bar = new Input();
-        $bar->getValidatorChain()->addValidator(new Validator\Digits());
+        $bar->getValidatorChain()->attach(new Validator\Digits());
 
         $filter->add($foo, 'foo')
                ->add($bar, 'bar');
@@ -373,14 +419,14 @@ class BaseInputFilterTest extends TestCase
 
         $store = new stdClass;
         $foo   = new Input();
-        $foo->getValidatorChain()->addValidator(new Validator\Callback(function ($value, $context) use ($store) {
+        $foo->getValidatorChain()->attach(new Validator\Callback(function ($value, $context) use ($store) {
             $store->value   = $value;
             $store->context = $context;
             return true;
         }));
 
         $bar = new Input();
-        $bar->getValidatorChain()->addValidator(new Validator\Digits());
+        $bar->getValidatorChain()->attach(new Validator\Digits());
         $bar->setBreakOnFailure(true);
 
         $filter->add($bar, 'bar')  // adding bar first, as we want it to validate first and break the chain
@@ -399,11 +445,11 @@ class BaseInputFilterTest extends TestCase
         $filter = new InputFilter();
 
         $foo   = new Input();
-        $foo->getValidatorChain()->addValidator(new Validator\StringLength(3, 5));
+        $foo->getValidatorChain()->attach(new Validator\StringLength(3, 5));
         $foo->setRequired(false);
 
         $bar = new Input();
-        $bar->getValidatorChain()->addValidator(new Validator\Digits());
+        $bar->getValidatorChain()->attach(new Validator\Digits());
         $bar->setRequired(true);
 
         $filter->add($foo, 'foo')
@@ -420,7 +466,7 @@ class BaseInputFilterTest extends TestCase
         $filter = new InputFilter();
 
         $foo   = new FileInput();
-        $foo->getValidatorChain()->addValidator(new Validator\File\Upload());
+        $foo->getValidatorChain()->attach(new Validator\File\UploadFile());
         $foo->setRequired(false);
 
         $filter->add($foo, 'foo');
@@ -446,14 +492,8 @@ class BaseInputFilterTest extends TestCase
     public function testValidationSkipsFileInputsMarkedNotRequiredWhenNoMultiFileDataIsPresent()
     {
         $filter = new InputFilter();
-
-        $explode = new Validator\File\Explode();
-        $explode->setValidator(new Validator\File\Upload());
-
-        $foo   = new FileInput();
-        $foo->getValidatorChain()->addValidator($explode);
+        $foo    = new FileInput();
         $foo->setRequired(false);
-
         $filter->add($foo, 'foo');
 
         $data = array(
@@ -479,18 +519,22 @@ class BaseInputFilterTest extends TestCase
         $filter = new InputFilter();
 
         $foo   = new Input('foo');
-        $foo->getValidatorChain()->addValidator(new Validator\StringLength(3, 5));
+        $foo->getValidatorChain()->attach(new Validator\StringLength(3, 5));
         $foo->setRequired(true);
         $foo->setAllowEmpty(true);
 
         $bar = new Input();
-        $bar->getValidatorChain()->addValidator(new Validator\Digits());
+        $bar->getValidatorChain()->attach(new Validator\Digits());
         $bar->setRequired(true);
 
         $filter->add($foo, '')
                ->add($bar, 'bar');
 
-        $data = array('bar' => 124);
+        $data = array(
+            'bar' => 124,
+            'foo' => '',
+        );
+
         $filter->setData($data);
 
         $this->assertTrue($filter->isValid());
@@ -502,12 +546,12 @@ class BaseInputFilterTest extends TestCase
         $filter = new InputFilter();
 
         $foo   = new Input();
-        $foo->getValidatorChain()->addValidator(new Validator\StringLength(3, 5));
+        $foo->getValidatorChain()->attach(new Validator\StringLength(3, 5));
         $foo->setRequired(true);
         $foo->setAllowEmpty(false);
 
         $bar = new Input();
-        $bar->getValidatorChain()->addValidator(new Validator\Digits());
+        $bar->getValidatorChain()->attach(new Validator\Digits());
         $bar->setRequired(true);
 
         $filter->add($foo, '')
@@ -517,6 +561,62 @@ class BaseInputFilterTest extends TestCase
         $filter->setData($data);
 
         $this->assertFalse($filter->isValid());
+    }
+
+    public function testValidationMarksInputInvalidWhenNotRequiredAndAllowEmptyFlagIsFalse()
+    {
+        $filter = new InputFilter();
+
+        $foo   = new Input();
+        $foo->setRequired(false);
+        $foo->setAllowEmpty(false);
+
+        $filter->add($foo, 'foo');
+
+        $data = array('foo' => '');
+        $filter->setData($data);
+
+        $this->assertFalse($filter->isValid());
+    }
+
+    public static function contextDataProvider()
+    {
+        return array(
+            array('', 'y', true),
+            array('', 'n', false),
+        );
+    }
+
+    /**
+     * Idea here is that an empty field may or may not be valid based on
+     * context.
+     */
+    /**
+     * @dataProvider contextDataProvider()
+     */
+    public function testValidationMarksInputValidWhenAllowEmptyFlagIsTrueAndContinueIfEmptyIsTrueAndContextValidatesEmptyField($allowEmpty, $blankIsValid, $valid)
+    {
+        $filter = new InputFilter();
+
+        $data = array (
+            'allowEmpty' => $allowEmpty,
+            'blankIsValid' => $blankIsValid,
+        );
+
+        $allowEmpty = new Input();
+        $allowEmpty->setAllowEmpty(true)
+                   ->setContinueIfEmpty(true);
+
+        $blankIsValid = new Input();
+        $blankIsValid->getValidatorChain()->attach(new Validator\Callback(function($value, $context) {
+            return ('y' === $value && empty($context['allowEmpty']));
+        }));
+
+        $filter->add($allowEmpty, 'allowEmpty')
+               ->add($blankIsValid, 'blankIsValid');
+        $filter->setData($data);
+
+        $this->assertSame($valid, $filter->isValid());
     }
 
     public function testCanRetrieveRawValuesIndividuallyWithoutValidating()
@@ -615,5 +715,71 @@ class BaseInputFilterTest extends TestCase
         $filter->setData($validData);
         $unknown = $filter->getUnknown();
         $this->assertEquals(0, count($unknown));
+    }
+
+    public function testValidateUseExplodeAndInstanceOf()
+    {
+        $filter = new InputFilter();
+
+        $input = new Input();
+        $input->setRequired(true);
+
+        $input->getValidatorChain()->attach(
+            new \Zend\Validator\Explode(
+                array(
+                    'validator' => new \Zend\Validator\IsInstanceOf(
+                        array(
+                            'className' => 'Zend\InputFilter\Input'
+                        )
+                    )
+                )
+            )
+        );
+
+        $filter->add($input, 'example');
+
+        $data = array(
+            'example' => array(
+                $input
+            )
+        );
+
+        $filter->setData($data);
+        $this->assertTrue($filter->isValid());
+    }
+
+    public function testGetInputs()
+    {
+        $filter = new InputFilter();
+
+        $foo = new Input('foo');
+        $bar = new Input('bar');
+
+        $filter->add($foo);
+        $filter->add($bar);
+
+        $filters = $filter->getInputs();
+
+        $this->assertCount(2, $filters);
+        $this->assertEquals('foo', $filters['foo']->getName());
+        $this->assertEquals('bar', $filters['bar']->getName());
+    }
+
+    /**
+     * @group 4996
+     */
+    public function testAddingExistingInputWillMergeIntoExisting()
+    {
+        $filter = new InputFilter();
+
+        $foo1    = new Input('foo');
+        $foo1->setRequired(true);
+        $filter->add($foo1);
+
+        $foo2    = new Input('foo');
+        $foo2->setRequired(false);
+        $filter->add($foo2);
+
+        $this->assertFalse($filter->get('foo')->isRequired());
     }
 }

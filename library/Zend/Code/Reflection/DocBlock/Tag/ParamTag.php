@@ -3,17 +3,12 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
- * @package   Zend_Code
  */
 
 namespace Zend\Code\Reflection\DocBlock\Tag;
 
-/**
- * @category   Zend
- * @package    Zend_Reflection
- */
 class ParamTag implements TagInterface, PhpDocTypedTagInterface
 {
     /**
@@ -42,12 +37,15 @@ class ParamTag implements TagInterface, PhpDocTypedTagInterface
     /**
      * Initializer
      *
-     * @param string $tagDocBlockLine
+     * @param  string $tagDocBlockLine
      */
     public function initialize($tagDocBlockLine)
     {
         $matches = array();
-        preg_match('#((?:[\w|\\\]+(?:\[\])*\|?)+)(?:\s+(\$\S+))?(?:\s+(.*))?#s', $tagDocBlockLine, $matches);
+
+        if (!preg_match('#((?:[\w|\\\]+(?:\[\])*\|?)+)(?:\s+(\$\S+))?(?:\s+(.*))?#s', $tagDocBlockLine, $matches)) {
+            return;
+        }
 
         $this->types = explode('|', $matches[1]);
 
@@ -90,6 +88,9 @@ class ParamTag implements TagInterface, PhpDocTypedTagInterface
         return $this->variableName;
     }
 
+    /**
+     * @return string
+     */
     public function getDescription()
     {
         return $this->description;

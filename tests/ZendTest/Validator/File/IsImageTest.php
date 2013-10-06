@@ -3,9 +3,8 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
- * @package   Zend_Validator
  */
 
 namespace ZendTest\Validator\File;
@@ -15,9 +14,6 @@ use Zend\Validator\File;
 /**
  * IsImage testbed
  *
- * @category   Zend
- * @package    Zend_Validator_File
- * @subpackage UnitTests
  * @group      Zend_Validator
  */
 class IsImageTest extends \PHPUnit_Framework_TestCase
@@ -26,8 +22,10 @@ class IsImageTest extends \PHPUnit_Framework_TestCase
     {
         // As of PHP >= 5.3.11 and >= 5.4.1 the magic database format has changed.
         // http://doc.php.net/downloads/pdf/split/de/File-Information.pdf (page 11)
-        if (version_compare(PHP_VERSION, '5.3.10', '<=') || (version_compare(PHP_VERSION, '5.4', '>=') &&
-                                                             version_compare(PHP_VERSION, '5.4.1', '<'))) {
+        if (version_compare(PHP_VERSION, '5.3.11', '<')
+            || (version_compare(PHP_VERSION, '5.4', '>=')
+                && version_compare(PHP_VERSION, '5.4.1', '<'))
+        ) {
             return __DIR__ . '/_files/magic.lte.5.3.10.mime';
         }
 
@@ -70,6 +68,21 @@ class IsImageTest extends \PHPUnit_Framework_TestCase
         $validator = new File\IsImage($options);
         $validator->enableHeaderCheck();
         $this->assertEquals($expected, $validator->isValid($isValidParam));
+    }
+
+    /**
+     * Ensures that the validator follows expected behavior for legacy Zend\Transfer API
+     *
+     * @dataProvider basicBehaviorDataProvider
+     * @return void
+     */
+    public function testLegacy($options, $isValidParam, $expected)
+    {
+        if (is_array($isValidParam)) {
+            $validator = new File\IsImage($options);
+            $validator->enableHeaderCheck();
+            $this->assertEquals($expected, $validator->isValid($isValidParam['tmp_name'], $isValidParam));
+        }
     }
 
     /**
@@ -171,6 +184,15 @@ class IsImageTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals($magicFile, $validator->getMagicFile());
         $this->assertTrue($validator->getHeaderCheck());
         $this->assertEquals('image/gif,image/jpg', $validator->getMimeType());
+    }
+
+    public function testNonMimeOptionsAtConstructorStillSetsDefaults()
+    {
+        $validator = new File\IsImage(array(
+            'enableHeaderCheck' => true,
+        ));
+
+        $this->assertNotEmpty($validator->getMimeType());
     }
 
     /**

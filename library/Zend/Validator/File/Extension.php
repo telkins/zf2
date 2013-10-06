@@ -3,9 +3,8 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
- * @package   Zend_Validator
  */
 
 namespace Zend\Validator\File;
@@ -16,9 +15,6 @@ use Zend\Validator\AbstractValidator;
 use Zend\Validator\Exception;
 /**
  * Validator for the file extension of a file
- *
- * @category  Zend
- * @package   Zend_Validator
  */
 class Extension extends AbstractValidator
 {
@@ -56,7 +52,7 @@ class Extension extends AbstractValidator
     /**
      * Sets validator options
      *
-     * @param  string|array|\Traversable $options
+     * @param  string|array|Traversable $options
      */
     public function __construct($options = null)
     {
@@ -92,7 +88,7 @@ class Extension extends AbstractValidator
     /**
      * Returns the case option
      *
-     * @return boolean
+     * @return bool
      */
     public function getCase()
     {
@@ -102,12 +98,12 @@ class Extension extends AbstractValidator
     /**
      * Sets the case to use
      *
-     * @param  boolean $case
+     * @param  bool $case
      * @return Extension Provides a fluent interface
      */
     public function setCase($case)
     {
-        $this->options['case'] = (boolean) $case;
+        $this->options['case'] = (bool) $case;
         return $this;
     }
 
@@ -175,11 +171,16 @@ class Extension extends AbstractValidator
      * set extension list
      *
      * @param  string|array $value Real file to check for extension
-     * @return boolean
+     * @param  array        $file  File data from \Zend\File\Transfer\Transfer (optional)
+     * @return bool
      */
-    public function isValid($value)
+    public function isValid($value, $file = null)
     {
-        if (is_array($value)) {
+        if (is_string($value) && is_array($file)) {
+            // Legacy Zend\Transfer API support
+            $filename = $file['name'];
+            $file     = $file['tmp_name'];
+        } elseif (is_array($value)) {
             if (!isset($value['tmp_name']) || !isset($value['name'])) {
                 throw new Exception\InvalidArgumentException(
                     'Value array must be in $_FILES format'

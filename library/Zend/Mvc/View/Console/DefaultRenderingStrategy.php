@@ -3,57 +3,28 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
- * @package   Zend_Mvc
  */
 
 namespace Zend\Mvc\View\Console;
 
+use Zend\Console\Response as ConsoleResponse;
+use Zend\EventManager\AbstractListenerAggregate;
 use Zend\EventManager\EventManagerInterface;
 use Zend\EventManager\ListenerAggregateInterface;
 use Zend\Mvc\MvcEvent;
 use Zend\Stdlib\ResponseInterface as Response;
-use Zend\Console\Response as ConsoleResponse;
 use Zend\View\Model\ConsoleModel as ConsoleViewModel;
-use Zend\View\Model\ModelInterface as ViewModel;
 
-/**
- * @category   Zend
- * @package    Zend_Mvc
- * @subpackage View
- */
-class DefaultRenderingStrategy implements ListenerAggregateInterface
+class DefaultRenderingStrategy extends AbstractListenerAggregate
 {
     /**
-     * @var \Zend\Stdlib\CallbackHandler[]
-     */
-    protected $listeners = array();
-
-    /**
-     * Attach the aggregate to the specified event manager
-     *
-     * @param  EventManagerInterface $events
-     * @return void
+     * {@inheritDoc}
      */
     public function attach(EventManagerInterface $events)
     {
         $this->listeners[] = $events->attach(MvcEvent::EVENT_RENDER, array($this, 'render'), -10000);
-    }
-
-    /**
-     * Detach aggregate listeners from the specified event manager
-     *
-     * @param  EventManagerInterface $events
-     * @return void
-     */
-    public function detach(EventManagerInterface $events)
-    {
-        foreach ($this->listeners as $index => $listener) {
-            if ($events->detach($listener)) {
-                unset($this->listeners[$index]);
-            }
-        }
     }
 
     /**
@@ -89,7 +60,11 @@ class DefaultRenderingStrategy implements ListenerAggregateInterface
         }
 
         // Fetch result from primary model
-        $responseText .= $result->getResult();
+        if ($result instanceof ConsoleViewModel) {
+            $responseText .= $result->getResult();
+        } else {
+            $responseText .= $result->getVariable(ConsoleViewModel::RESULT);
+        }
 
         // Append console response to response object
         $response->setContent(

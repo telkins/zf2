@@ -3,20 +3,14 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
- * @package   Zend_Permissions
  */
 
 namespace Zend\Permissions\Rbac;
 
 use RecursiveIterator;
 
-/**
- * @category   Zend
- * @package    Zend_Permissions
- * @subpackage Rbac
- */
 abstract class AbstractIterator implements RecursiveIterator
 {
     protected $index    = 0;
@@ -59,7 +53,7 @@ abstract class AbstractIterator implements RecursiveIterator
      * (PHP 5 &gt;= 5.0.0)<br/>
      * Checks if current position is valid
      * @link http://php.net/manual/en/iterator.valid.php
-     * @return boolean The return value will be casted to boolean and then evaluated.
+     * @return bool The return value will be casted to boolean and then evaluated.
      * Returns true on success or false on failure.
      */
     public function valid()
@@ -86,7 +80,11 @@ abstract class AbstractIterator implements RecursiveIterator
      */
     public function hasChildren()
     {
-        return count($this->children) > 0;
+        if ($this->valid() && ($this->current() instanceof RecursiveIterator)) {
+            return true;
+        }
+
+        return false;
     }
 
     /**

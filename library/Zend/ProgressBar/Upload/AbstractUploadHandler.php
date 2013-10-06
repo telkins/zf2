@@ -3,9 +3,8 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
- * @package   Zend_ProgressBar
  */
 
 namespace Zend\ProgressBar\Upload;
@@ -18,9 +17,6 @@ use Zend\Stdlib\ArrayUtils;
 
 /**
  * Abstract class for Upload Progress Handlers
- *
- * @category  Zend
- * @package   Zend_ProgressBar
  */
 abstract class AbstractUploadHandler implements UploadHandlerInterface
 {
@@ -35,7 +31,7 @@ abstract class AbstractUploadHandler implements UploadHandlerInterface
     protected $progressAdapter;
 
     /**
-     * @param  array|\Traversable $options Optional options
+     * @param  array|Traversable $options Optional options
      * @throws Exception\InvalidArgumentException
      */
     public function __construct($options = array())
@@ -50,7 +46,7 @@ abstract class AbstractUploadHandler implements UploadHandlerInterface
      * - session_namespace: session namespace for upload progress
      * - progress_adapter: progressbar adapter to use for updating progress
      *
-     * @param  array|\Traversable $options
+     * @param  array|Traversable $options
      * @return AbstractUploadHandler
      * @throws Exception\InvalidArgumentException
      */
@@ -163,14 +159,14 @@ abstract class AbstractUploadHandler implements UploadHandlerInterface
 
     /**
      * @param  string $id
-     * @return array|boolean
+     * @return array|bool
      */
     abstract protected function getUploadProgress($id);
 
     /**
      * Returns the formatted size
      *
-     * @param  integer $size
+     * @param  int $size
      * @return string
      */
     protected function toByteString($size)

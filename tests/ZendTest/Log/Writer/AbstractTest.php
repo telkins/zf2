@@ -3,9 +3,8 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
- * @package   Zend_Log
  */
 
 namespace ZendTest\Log\Writer;
@@ -16,9 +15,6 @@ use Zend\Log\Formatter\Simple as SimpleFormatter;
 use Zend\Log\Filter\Regex as RegexFilter;
 
 /**
- * @category   Zend
- * @package    Zend_Log
- * @subpackage UnitTests
  * @group      Zend_Log
  */
 class AbstractTest extends \PHPUnit_Framework_TestCase
@@ -41,7 +37,7 @@ class AbstractTest extends \PHPUnit_Framework_TestCase
         $this->_writer->addFilter(1);
         $this->_writer->addFilter(new RegexFilter('/mess/'));
         $this->setExpectedException('Zend\Log\Exception\InvalidArgumentException');
-        $this->_writer->addFilter(new \StdClass());
+        $this->_writer->addFilter(new \stdClass());
     }
 
     public function testAddMockFilterByName()

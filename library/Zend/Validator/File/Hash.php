@@ -3,9 +3,8 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
- * @package   Zend_Validator
  */
 
 namespace Zend\Validator\File;
@@ -15,9 +14,6 @@ use Zend\Validator\Exception;
 
 /**
  * Validator for the hash of given files
- *
- * @category  Zend
- * @package   Zend_Validator
  */
 class Hash extends AbstractValidator
 {
@@ -128,11 +124,16 @@ class Hash extends AbstractValidator
      * Returns true if and only if the given file confirms the set hash
      *
      * @param  string|array $value File to check for hash
-     * @return boolean
+     * @param  array        $file  File data from \Zend\File\Transfer\Transfer (optional)
+     * @return bool
      */
-    public function isValid($value)
+    public function isValid($value, $file = null)
     {
-        if (is_array($value)) {
+        if (is_string($value) && is_array($file)) {
+            // Legacy Zend\Transfer API support
+            $filename = $file['name'];
+            $file     = $file['tmp_name'];
+        } elseif (is_array($value)) {
             if (!isset($value['tmp_name']) || !isset($value['name'])) {
                 throw new Exception\InvalidArgumentException(
                     'Value array must be in $_FILES format'

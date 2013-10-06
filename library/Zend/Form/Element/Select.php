@@ -1,21 +1,9 @@
 <?php
 /**
- * Zend Framework
+ * Zend Framework (http://framework.zend.com/)
  *
- * LICENSE
- *
- * This source file is subject to the new BSD license that is bundled
- * with this package in the file LICENSE.txt.
- * It is also available through the world-wide-web at this URL:
- * http://framework.zend.com/license/new-bsd
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@zend.com so we can send you a copy immediately.
- *
- * @category   Zend
- * @package    Zend_Form
- * @subpackage Element
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @link      http://github.com/zendframework/zf2 for the canonical source repository
+ * @copyright  Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
  * @license    http://framework.zend.com/license/new-bsd     New BSD License
  */
 
@@ -29,13 +17,6 @@ use Zend\InputFilter\InputProviderInterface;
 use Zend\Validator\Explode as ExplodeValidator;
 use Zend\Validator\InArray as InArrayValidator;
 
-/**
- * @category   Zend
- * @package    Zend_Form
- * @subpackage Element
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
- * @license    http://framework.zend.com/license/new-bsd     New BSD License
- */
 class Select extends Element implements InputProviderInterface
 {
     /**
@@ -51,6 +32,11 @@ class Select extends Element implements InputProviderInterface
      * @var \Zend\Validator\ValidatorInterface
      */
     protected $validator;
+
+    /**
+     * @var bool
+     */
+    protected $disableInArrayValidator = false;
 
     /**
      * Create an empty option (option with label but no value). If set to null, no option is created
@@ -81,16 +67,16 @@ class Select extends Element implements InputProviderInterface
         $this->valueOptions = $options;
 
         // Update InArrayValidator validator haystack
-        if (!is_null($this->validator)) {
-            if ($this->validator instanceof InArrayValidator){
+        if (null !== $this->validator) {
+            if ($this->validator instanceof InArrayValidator) {
                 $validator = $this->validator;
             }
             if ($this->validator instanceof ExplodeValidator
                 && $this->validator->getValidator() instanceof InArrayValidator
-            ){
+            ) {
                 $validator = $this->validator->getValidator();
             }
-            if (!empty($validator)){
+            if (!empty($validator)) {
                 $validator->setHaystack($this->getValueOptionsValues());
             }
         }
@@ -105,7 +91,7 @@ class Select extends Element implements InputProviderInterface
      * - value_options: list of values and labels for the select options
      * _ empty_option: should an empty option be prepended to the options ?
      *
-     * @param  array|\Traversable $options
+     * @param  array|Traversable $options
      * @return Select|ElementInterface
      * @throws InvalidArgumentException
      */
@@ -123,6 +109,10 @@ class Select extends Element implements InputProviderInterface
 
         if (isset($this->options['empty_option'])) {
             $this->setEmptyOption($this->options['empty_option']);
+        }
+
+        if (isset($this->options['disable_inarray_validator'])) {
+            $this->setDisableInArrayValidator($this->options['disable_inarray_validator']);
         }
 
         return $this;
@@ -144,6 +134,28 @@ class Select extends Element implements InputProviderInterface
             return $this;
         }
         return parent::setAttribute($key, $value);
+    }
+
+    /**
+     * Set the flag to allow for disabling the automatic addition of an InArray validator.
+     *
+     * @param bool $disableOption
+     * @return Select
+     */
+    public function setDisableInArrayValidator($disableOption)
+    {
+        $this->disableInArrayValidator = (bool) $disableOption;
+        return $this;
+    }
+
+    /**
+     * Get the disable in array validator flag.
+     *
+     * @return bool
+     */
+    public function disableInArrayValidator()
+    {
+        return $this->disableInArrayValidator;
     }
 
     /**
@@ -175,7 +187,7 @@ class Select extends Element implements InputProviderInterface
      */
     protected function getValidator()
     {
-        if (null === $this->validator) {
+        if (null === $this->validator && !$this->disableInArrayValidator()) {
             $validator = new InArrayValidator(array(
                 'haystack' => $this->getValueOptionsValues(),
                 'strict'   => false
@@ -208,10 +220,13 @@ class Select extends Element implements InputProviderInterface
         $spec = array(
             'name' => $this->getName(),
             'required' => true,
-            'validators' => array(
-                $this->getValidator()
-            )
         );
+
+        if ($validator = $this->getValidator()) {
+            $spec['validators'] = array(
+                $validator,
+            );
+        }
 
         return $spec;
     }

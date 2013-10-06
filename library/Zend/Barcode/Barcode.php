@@ -3,22 +3,17 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
- * @package   Zend_Barcode
  */
 
 namespace Zend\Barcode;
 
 use Traversable;
-use Zend;
 use Zend\Stdlib\ArrayUtils;
 
 /**
  * Class for generate Barcode
- *
- * @category   Zend
- * @package    Zend_Barcode
  */
 abstract class Barcode
 {
@@ -76,7 +71,7 @@ abstract class Barcode
     }
 
     /**
-     * Factory for Zend_Barcode classes.
+     * Factory for Zend\Barcode classes.
      *
      * First argument may be a string containing the base of the adapter class
      * name, e.g. 'int25' corresponds to class Object\Int25.  This
@@ -96,7 +91,7 @@ abstract class Barcode
      * @param  mixed $renderer        String name of renderer class
      * @param  mixed $barcodeConfig   OPTIONAL; an array or Traversable object with barcode parameters.
      * @param  mixed $rendererConfig  OPTIONAL; an array or Traversable object with renderer parameters.
-     * @param  boolean $automaticRenderError  OPTIONAL; set the automatic rendering of exception
+     * @param  bool $automaticRenderError  OPTIONAL; set the automatic rendering of exception
      * @return Barcode
      * @throws Exception\ExceptionInterface
      */
@@ -133,7 +128,7 @@ abstract class Barcode
             $renderer = static::makeRenderer($renderer, $rendererConfig);
         } catch (Exception\ExceptionInterface $e) {
             if ($automaticRenderError && !($e instanceof Exception\RendererCreationException)) {
-                $barcode  = static::makeBarcode('error', array( 'text' => $e->getMessage() ));
+                $barcode  = static::makeBarcode('error', array('text' => $e->getMessage()));
                 $renderer = static::makeRenderer($renderer, array());
             } else {
                 throw $e;

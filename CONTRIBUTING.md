@@ -25,7 +25,7 @@ page, http://framework.zend.com/wiki/display/ZFDEV2/RFC%27s.
 
 To run tests:
 
-- Make sure you have a recent version of PHPUnit installed; 3.6.0
+- Make sure you have a recent version of PHPUnit installed; 3.7.0
   minimally.
 - Enter the `tests/` subdirectory.
 - Execute PHPUnit, providing a path to a component directory for which
@@ -61,11 +61,11 @@ To run tests:
   component namespace, without the `Zend\` prefix:
 
   ```sh
-  % php run-tests Mvc
+  % php run-tests.php Mvc
   ```
 
   ```sh
-  % php run-tests ModuleManager Mvc View Navigation
+  % php run-tests.php ModuleManager Mvc View Navigation
   ```
 
 You can turn on conditional tests with the TestConfiguration.php file.

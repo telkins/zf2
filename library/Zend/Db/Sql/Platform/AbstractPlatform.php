@@ -3,19 +3,18 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
- * @package   Zend_Db
  */
 
 namespace Zend\Db\Sql\Platform;
 
 use Zend\Db\Adapter\AdapterInterface;
-use Zend\Db\Adapter\StatementContainerInterface;
 use Zend\Db\Adapter\Platform\PlatformInterface;
+use Zend\Db\Adapter\StatementContainerInterface;
+use Zend\Db\Sql\Exception;
 use Zend\Db\Sql\PreparableSqlInterface;
 use Zend\Db\Sql\SqlInterface;
-use Zend\Db\Sql\Exception;
 
 class AbstractPlatform implements PlatformDecoratorInterface, PreparableSqlInterface, SqlInterface
 {
@@ -104,9 +103,8 @@ class AbstractPlatform implements PlatformDecoratorInterface, PreparableSqlInter
         if ($decoratorForType) {
             $decoratorForType->setSubject($this->subject);
             return $decoratorForType->getSqlString($adapterPlatform);
-        } else {
-            return $this->subject->getSqlString($adapterPlatform);
         }
-    }
 
+        return $this->subject->getSqlString($adapterPlatform);
+    }
 }

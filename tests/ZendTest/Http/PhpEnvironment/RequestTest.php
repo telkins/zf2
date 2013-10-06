@@ -3,9 +3,8 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
- * @package   Zend_Http
  */
 
 namespace ZendTest\Http\PhpEnvironment;
@@ -318,6 +317,26 @@ class RequestTest extends TestCase
             array(
                 array(
                     'HTTP_HOST' => 'test.example.com',
+                    'REQUEST_URI' => 'http://test.example.com/news',
+                ),
+                'test.example.com',
+                '80',
+                '/news',
+            ),
+            array(
+                array(
+                    'SERVER_NAME' => 'test.example.com',
+                    'HTTP_HOST' => 'requested.example.com',
+                    'REQUEST_URI' => 'http://test.example.com/news',
+                ),
+                'requested.example.com',
+                '80',
+                '/news',
+            ),
+            array(
+                array(
+                    'SERVER_NAME' => 'test.example.com',
+                    'HTTP_HOST' => '<script>alert("Spoofed host");</script>',
                     'REQUEST_URI' => 'http://test.example.com/news',
                 ),
                 'test.example.com',

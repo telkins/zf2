@@ -3,9 +3,8 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
- * @package   Zend_Server
  */
 
 namespace Zend\Server\Reflection;
@@ -16,11 +15,7 @@ use ReflectionClass as PhpReflectionClass;
  * Class/Object reflection
  *
  * Proxies calls to a ReflectionClass object, and decorates getMethods() by
- * creating its own list of {@link Zend_Server_Reflection_Method}s.
- *
- * @category   Zend
- * @package    Zend_Server
- * @subpackage Zend_Server_Reflection
+ * creating its own list of {@link Zend\Server\Reflection\ReflectionMethod}s.
  */
 class ReflectionClass
 {
@@ -127,7 +122,7 @@ class ReflectionClass
     }
 
     /**
-     * Return array of dispatchable {@link \Zend\Server\Reflection\Method}s.
+     * Return array of dispatchable {@link \Zend\Server\Reflection\ReflectionMethod}s.
      *
      * @access public
      * @return array

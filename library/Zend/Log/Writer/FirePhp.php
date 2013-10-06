@@ -3,23 +3,19 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
- * @package   Zend_Log
  */
 
 namespace Zend\Log\Writer;
 
+use Traversable;
 use FirePHP as FirePHPService;
+use Zend\Log\Exception;
 use Zend\Log\Formatter\FirePhp as FirePhpFormatter;
 use Zend\Log\Logger;
-use Zend\Log\Exception;
+use FirePhp\FirePhpInterface;
 
-/**
- * @category   Zend
- * @package    Zend_Log
- * @subpackage Writer
- */
 class FirePhp extends AbstractWriter
 {
     /**
@@ -32,11 +28,25 @@ class FirePhp extends AbstractWriter
     /**
      * Initializes a new instance of this class.
      *
-     * @param null|FirePhp\FirePhpInterface $instance An instance of FirePhpInterface
+     * @param null|FirePhp\FirePhpInterface|array|Traversable $instance An instance of FirePhpInterface
      *        that should be used for logging
      */
-    public function __construct(FirePhp\FirePhpInterface $instance = null)
+    public function __construct($instance = null)
     {
+        if ($instance instanceof Traversable) {
+            $instance = iterator_to_array($instance);
+        }
+
+        if (is_array($instance)) {
+            parent::__construct($instance);
+            $instance = isset($instance['instance']) ? $instance['instance'] : null;
+        }
+
+        if ($instance instanceof FirePhpInterface) {
+            throw new Exception\InvalidArgumentException('You must pass a valid FirePhp\FirePhpInterface');
+        }
+
+
         $this->firephp   = $instance;
         $this->formatter = new FirePhpFormatter();
     }

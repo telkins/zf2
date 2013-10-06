@@ -3,17 +3,18 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
- * @package   Zend_Form
  */
 
 namespace Zend\Form\Element;
 
-use DateTime;
-use Zend\Form\Form;
+use DateTime as PhpDateTime;
+use Zend\Form\Exception\InvalidArgumentException;
+use Zend\Form\FormInterface;
 use Zend\Validator\ValidatorInterface;
 use Zend\Validator\Date as DateValidator;
+use Exception;
 
 class DateSelect extends MonthSelect
 {
@@ -32,9 +33,9 @@ class DateSelect extends MonthSelect
      */
     public function __construct($name = null, $options = array())
     {
-        parent::__construct($name, $options);
-
         $this->dayElement = new Select('day');
+
+        parent::__construct($name, $options);
     }
 
     /**
@@ -86,12 +87,21 @@ class DateSelect extends MonthSelect
     }
 
     /**
-     * @param mixed $value
+     * @param  string|array|\ArrayAccess|PhpDateTime $value
+     * @throws \Zend\Form\Exception\InvalidArgumentException
      * @return void|\Zend\Form\Element
      */
     public function setValue($value)
     {
-        if ($value instanceof DateTime) {
+        if (is_string($value)) {
+            try {
+                $value = new PhpDateTime($value);
+            } catch (Exception $e) {
+                throw new InvalidArgumentException('Value should be a parsable string or an instance of DateTime');
+            }
+        }
+
+        if ($value instanceof PhpDateTime) {
             $value = array(
                 'year'  => $value->format('Y'),
                 'month' => $value->format('m'),
@@ -107,10 +117,10 @@ class DateSelect extends MonthSelect
     /**
      * Prepare the form element (mostly used for rendering purposes)
      *
-     * @param Form $form
+     * @param  FormInterface $form
      * @return mixed
      */
-    public function prepareElement(Form $form)
+    public function prepareElement(FormInterface $form)
     {
         parent::prepareElement($form);
 

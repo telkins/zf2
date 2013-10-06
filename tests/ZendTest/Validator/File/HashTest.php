@@ -3,9 +3,8 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
- * @package   Zend_Validator
  */
 
 namespace ZendTest\Validator\File;
@@ -15,9 +14,6 @@ use Zend\Validator\File;
 /**
  * Hash testbed
  *
- * @category   Zend
- * @package    Zend_Validator_File
- * @subpackage UnitTests
  * @group      Zend_Validator
  */
 class HashTest extends \PHPUnit_Framework_TestCase
@@ -89,6 +85,23 @@ class HashTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals($expected, $validator->isValid($isValidParam));
         if (!$expected) {
             $this->assertTrue(array_key_exists($messageKey, $validator->getMessages()));
+        }
+    }
+
+    /**
+     * Ensures that the validator follows expected behavior for legacy Zend\Transfer API
+     *
+     * @dataProvider basicBehaviorDataProvider
+     * @return void
+     */
+    public function testLegacy($options, $isValidParam, $expected, $messageKey)
+    {
+        if (is_array($isValidParam)) {
+            $validator = new File\Hash($options);
+            $this->assertEquals($expected, $validator->isValid($isValidParam['tmp_name'], $isValidParam));
+            if (!$expected) {
+                $this->assertTrue(array_key_exists($messageKey, $validator->getMessages()));
+            }
         }
     }
 

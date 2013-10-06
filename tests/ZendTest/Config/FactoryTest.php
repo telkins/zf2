@@ -3,9 +3,8 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
- * @package   Zend_Config
  */
 
 namespace ZendTest\Config;
@@ -13,9 +12,6 @@ namespace ZendTest\Config;
 use Zend\Config\Factory;
 
 /**
- * @category   Zend
- * @package    Zend_Config
- * @subpackage UnitTests
  * @group      Zend_Config
  */
 class FactoryTest extends \PHPUnit_Framework_TestCase
@@ -32,7 +28,7 @@ class FactoryTest extends \PHPUnit_Framework_TestCase
 
     public function tearDown()
     {
-        foreach($this->tmpFiles as $file) {
+        foreach ($this->tmpFiles as $file) {
             if (file_exists($file)) {
                 if (!is_writable($file)) {
                     chmod($file, 0777);

@@ -3,20 +3,14 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
- * @package   Zend_Mail
  */
 
 namespace Zend\Mail\Protocol;
 
 use Zend\Stdlib\ErrorHandler;
 
-/**
- * @category   Zend
- * @package    Zend_Mail
- * @subpackage Protocol
- */
 class Pop3
 {
     /**
@@ -152,7 +146,7 @@ class Pop3
     /**
      * read a response
      *
-     * @param  boolean $multiline response has multiple lines and should be read until "<nl>.<nl>"
+     * @param  bool $multiline response has multiple lines and should be read until "<nl>.<nl>"
      * @throws Exception\RuntimeException
      * @return string response
      */
@@ -251,6 +245,7 @@ class Pop3
         if ($tryApop && $this->timestamp) {
             try {
                 $this->request("APOP $user " . md5($this->timestamp . $password));
+                return;
             } catch (Exception\ExceptionInterface $e) {
                 // ignore
             }
@@ -297,7 +292,7 @@ class Pop3
         $line = strtok($result, "\n");
         while ($line) {
             list($no, $size) = explode(' ', trim($line));
-            $messages[(int)$no] = (int) $size;
+            $messages[(int) $no] = (int) $size;
             $line = strtok("\n");
         }
 

@@ -3,9 +3,8 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
- * @package   Zend_ModuleManager
  */
 
 namespace Zend\ModuleManager\Listener;
@@ -15,10 +14,6 @@ use Zend\Stdlib\AbstractOptions;
 
 /**
  * Listener options
- *
- * @category   Zend
- * @package    Zend_ModuleManager
- * @subpackage Listener
  */
 class ListenerOptions extends AbstractOptions
 {
@@ -58,6 +53,11 @@ class ListenerOptions extends AbstractOptions
     protected $cacheDir;
 
     /**
+     * @var bool
+     */
+    protected $checkDependencies = true;
+
+    /**
      * @var string
      */
     protected $moduleMapCacheEnabled = false;
@@ -89,7 +89,7 @@ class ListenerOptions extends AbstractOptions
         if (!is_array($modulePaths) && !$modulePaths instanceof Traversable) {
             throw new Exception\InvalidArgumentException(
                 sprintf('Argument passed to %s::%s() must be an array, '
-                . 'implement the \Traversable interface, or be an '
+                . 'implement the Traversable interface, or be an '
                 . 'instance of Zend\Config\Config. %s given.',
                 __CLASS__, __METHOD__, gettype($modulePaths))
             );
@@ -131,7 +131,7 @@ class ListenerOptions extends AbstractOptions
         if (!is_array($configGlobPaths) && !$configGlobPaths instanceof Traversable) {
             throw new Exception\InvalidArgumentException(
                 sprintf('Argument passed to %s::%s() must be an array, '
-                . 'implement the \Traversable interface, or be an '
+                . 'implement the Traversable interface, or be an '
                 . 'instance of Zend\Config\Config. %s given.',
                 __CLASS__, __METHOD__, gettype($configGlobPaths))
             );
@@ -153,7 +153,7 @@ class ListenerOptions extends AbstractOptions
         if (!is_array($configStaticPaths) && !$configStaticPaths instanceof Traversable) {
             throw new Exception\InvalidArgumentException(
                 sprintf('Argument passed to %s::%s() must be an array, '
-                . 'implement the \Traversable interface, or be an '
+                . 'implement the Traversable interface, or be an '
                 . 'instance of Zend\Config\Config. %s given.',
                 __CLASS__, __METHOD__, gettype($configStaticPaths))
             );
@@ -186,7 +186,7 @@ class ListenerOptions extends AbstractOptions
         if (!is_array($extraConfig) && !$extraConfig instanceof Traversable) {
             throw new Exception\InvalidArgumentException(
                 sprintf('Argument passed to %s::%s() must be an array, '
-                . 'implement the \Traversable interface, or be an '
+                . 'implement the Traversable interface, or be an '
                 . 'instance of Zend\Config\Config. %s given.',
                 __CLASS__, __METHOD__, gettype($extraConfig))
             );
@@ -331,6 +331,30 @@ class ListenerOptions extends AbstractOptions
     public function getModuleMapCacheFile()
     {
         return $this->getCacheDir() . '/module-classmap-cache.'.$this->getModuleMapCacheKey().'.php';
+    }
+
+    /**
+     * Set whether to check dependencies during module loading or not
+     *
+     * @return string
+     */
+    public function getCheckDependencies()
+    {
+        return $this->checkDependencies;
+    }
+
+    /**
+     * Set whether to check dependencies during module loading or not
+     *
+     * @param  bool $checkDependencies the value to be set
+     *
+     * @return ListenerOptions
+     */
+    public function setCheckDependencies($checkDependencies)
+    {
+        $this->checkDependencies = (bool) $checkDependencies;
+
+        return $this;
     }
 
     /**

@@ -3,9 +3,8 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
- * @package   Zend_View
  */
 
 namespace Zend\View\Model;
@@ -18,11 +17,6 @@ use Zend\View\Exception;
 use Zend\View\Model;
 use Zend\View\Variables as ViewVariables;
 
-/**
- * @category   Zend
- * @package    Zend_View
- * @subpackage Model
- */
 class ViewModel implements ModelInterface, ClearableModelInterface
 {
     /**
@@ -169,14 +163,14 @@ class ViewModel implements ModelInterface, ClearableModelInterface
      */
     public function getOption($name, $default = null)
     {
-        $name = (string)$name;
+        $name = (string) $name;
         return array_key_exists($name, $this->options) ? $this->options[$name] : $default;
     }
 
     /**
      * Set renderer options/hints en masse
      *
-     * @param array|\Traversable $options
+     * @param array|Traversable $options
      * @throws \Zend\View\Exception\InvalidArgumentException
      * @return ViewModel
      */
@@ -230,12 +224,12 @@ class ViewModel implements ModelInterface, ClearableModelInterface
      */
     public function getVariable($name, $default = null)
     {
-        $name = (string)$name;
+        $name = (string) $name;
         if (array_key_exists($name, $this->variables)) {
             return $this->variables[$name];
-        } else {
-            return $default;
         }
+
+        return $default;
     }
 
     /**
@@ -346,7 +340,7 @@ class ViewModel implements ModelInterface, ClearableModelInterface
         if (null !== $captureTo) {
             $child->setCaptureTo($captureTo);
         }
-        if (null !== $captureTo) {
+        if (null !== $append) {
             $child->setAppend($append);
         }
 

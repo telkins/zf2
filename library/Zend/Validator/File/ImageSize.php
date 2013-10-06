@@ -3,9 +3,8 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
- * @package   Zend_Validator
  */
 
 namespace Zend\Validator\File;
@@ -16,9 +15,6 @@ use Zend\Validator\Exception;
 
 /**
  * Validator for the image size of a image file
- *
- * @category  Zend
- * @package   Zend_Validator
  */
 class ImageSize extends AbstractValidator
 {
@@ -59,14 +55,14 @@ class ImageSize extends AbstractValidator
     /**
      * Detected width
      *
-     * @var integer
+     * @var int
      */
     protected $width;
 
     /**
      * Detected height
      *
-     * @var integer
+     * @var int
      */
     protected $height;
 
@@ -117,7 +113,7 @@ class ImageSize extends AbstractValidator
     /**
      * Returns the minimum allowed width
      *
-     * @return integer
+     * @return int
      */
     public function getMinWidth()
     {
@@ -127,7 +123,7 @@ class ImageSize extends AbstractValidator
     /**
      * Sets the minimum allowed width
      *
-     * @param  integer $minWidth
+     * @param  int $minWidth
      * @return ImageSize Provides a fluid interface
      * @throws Exception\InvalidArgumentException When minwidth is greater than maxwidth
      */
@@ -145,7 +141,7 @@ class ImageSize extends AbstractValidator
     /**
      * Returns the maximum allowed width
      *
-     * @return integer
+     * @return int
      */
     public function getMaxWidth()
     {
@@ -155,7 +151,7 @@ class ImageSize extends AbstractValidator
     /**
      * Sets the maximum allowed width
      *
-     * @param  integer $maxWidth
+     * @param  int $maxWidth
      * @return ImageSize Provides a fluid interface
      * @throws Exception\InvalidArgumentException When maxwidth is less than minwidth
      */
@@ -173,7 +169,7 @@ class ImageSize extends AbstractValidator
     /**
      * Returns the minimum allowed height
      *
-     * @return integer
+     * @return int
      */
     public function getMinHeight()
     {
@@ -183,7 +179,7 @@ class ImageSize extends AbstractValidator
     /**
      * Sets the minimum allowed height
      *
-     * @param  integer $minHeight
+     * @param  int $minHeight
      * @return ImageSize Provides a fluid interface
      * @throws Exception\InvalidArgumentException When minheight is greater than maxheight
      */
@@ -201,7 +197,7 @@ class ImageSize extends AbstractValidator
     /**
      * Returns the maximum allowed height
      *
-     * @return integer
+     * @return int
      */
     public function getMaxHeight()
     {
@@ -211,7 +207,7 @@ class ImageSize extends AbstractValidator
     /**
      * Sets the maximum allowed height
      *
-     * @param  integer $maxHeight
+     * @param  int $maxHeight
      * @return ImageSize Provides a fluid interface
      * @throws Exception\InvalidArgumentException When maxheight is less than minheight
      */
@@ -323,11 +319,16 @@ class ImageSize extends AbstractValidator
      * not bigger than max
      *
      * @param  string|array $value Real file to check for image size
-     * @return boolean
+     * @param  array        $file  File data from \Zend\File\Transfer\Transfer (optional)
+     * @return bool
      */
-    public function isValid($value)
+    public function isValid($value, $file = null)
     {
-        if (is_array($value)) {
+        if (is_string($value) && is_array($file)) {
+            // Legacy Zend\Transfer API support
+            $filename = $file['name'];
+            $file     = $file['tmp_name'];
+        } elseif (is_array($value)) {
             if (!isset($value['tmp_name']) || !isset($value['name'])) {
                 throw new Exception\InvalidArgumentException(
                     'Value array must be in $_FILES format'

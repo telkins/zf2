@@ -3,9 +3,8 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
- * @package   Zend_Db
  */
 
 namespace ZendTest\Db\Sql;
@@ -13,9 +12,9 @@ namespace ZendTest\Db\Sql;
 use Zend\Db\Sql\Expression;
 use Zend\Db\Sql\ExpressionInterface;
 use Zend\Db\Adapter\Driver\DriverInterface;
-use Zend\Db\Adapter\Platform\Sql92;
 use Zend\Db\Sql\Predicate;
 use Zend\Db\Sql\Select;
+use ZendTest\Db\TestAsset\TrustingSql92Platform;
 
 class AbstractSqlTest extends \PHPUnit_Framework_TestCase
 {
@@ -135,7 +134,7 @@ class AbstractSqlTest extends \PHPUnit_Framework_TestCase
     {
         $method = new \ReflectionMethod($this->abstractSql, 'processExpression');
         $method->setAccessible(true);
-        return $method->invoke($this->abstractSql, $expression, new Sql92, $driver);
+        return $method->invoke($this->abstractSql, $expression, new TrustingSql92Platform, $driver);
     }
 
 }

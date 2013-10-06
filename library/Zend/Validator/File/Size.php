@@ -3,9 +3,8 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
- * @package   Zend_Validator
  */
 
 namespace Zend\Validator\File;
@@ -16,9 +15,6 @@ use Zend\Validator\Exception;
 
 /**
  * Validator for the maximum size of a file up to a max of 2GB
- *
- * @category  Zend
- * @package   Zend_Validator
  */
 class Size extends AbstractValidator
 {
@@ -50,7 +46,7 @@ class Size extends AbstractValidator
     /**
      * Detected size
      *
-     * @var integer
+     * @var int
      */
     protected $size;
 
@@ -74,7 +70,7 @@ class Size extends AbstractValidator
      * 'max': Maximum file size
      * 'useByteString': Use bytestring or real size for messages
      *
-     * @param  integer|array|\Traversable $options Options for the adapter
+     * @param  int|array|\Traversable $options Options for the adapter
      */
     public function __construct($options = null)
     {
@@ -97,8 +93,8 @@ class Size extends AbstractValidator
     /**
      * Should messages return bytes as integer or as string in SI notation
      *
-     * @param  boolean $byteString Use bytestring ?
-     * @return integer
+     * @param  bool $byteString Use bytestring ?
+     * @return int
      */
     public function useByteString($byteString = true)
     {
@@ -109,7 +105,7 @@ class Size extends AbstractValidator
     /**
      * Will bytestring be used?
      *
-     * @return boolean
+     * @return bool
      */
     public function getByteString()
     {
@@ -120,7 +116,7 @@ class Size extends AbstractValidator
      * Returns the minimum file size
      *
      * @param  bool $raw Whether or not to force return of the raw value (defaults off)
-     * @return integer|string
+     * @return int|string
      */
     public function getMin($raw = false)
     {
@@ -139,7 +135,7 @@ class Size extends AbstractValidator
      * This includes 'B', 'kB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'
      * For example: 2000, 2MB, 0.2GB
      *
-     * @param  integer|string $min The minimum file size
+     * @param  int|string $min The minimum file size
      * @return Size Provides a fluent interface
      * @throws Exception\InvalidArgumentException When min is greater than max
      */
@@ -149,7 +145,7 @@ class Size extends AbstractValidator
             throw new Exception\InvalidArgumentException('Invalid options to validator provided');
         }
 
-        $min = (integer) $this->fromByteString($min);
+        $min = (int) $this->fromByteString($min);
         $max = $this->getMax(true);
         if (($max !== null) && ($min > $max)) {
             throw new Exception\InvalidArgumentException(
@@ -165,7 +161,7 @@ class Size extends AbstractValidator
      * Returns the maximum file size
      *
      * @param  bool $raw Whether or not to force return of the raw value (defaults off)
-     * @return integer|string
+     * @return int|string
      */
     public function getMax($raw = false)
     {
@@ -184,7 +180,7 @@ class Size extends AbstractValidator
      * This includes 'B', 'kB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'
      * For example: 2000, 2MB, 0.2GB
      *
-     * @param  integer|string $max The maximum file size
+     * @param  int|string $max The maximum file size
      * @return Size Provides a fluent interface
      * @throws Exception\InvalidArgumentException When max is smaller than min
      */
@@ -194,7 +190,7 @@ class Size extends AbstractValidator
             throw new Exception\InvalidArgumentException('Invalid options to validator provided');
         }
 
-        $max = (integer) $this->fromByteString($max);
+        $max = (int) $this->fromByteString($max);
         $min = $this->getMin(true);
         if (($min !== null) && ($max < $min)) {
             throw new Exception\InvalidArgumentException(
@@ -233,11 +229,16 @@ class Size extends AbstractValidator
      * not bigger than max (when max is not null).
      *
      * @param  string|array $value File to check for size
-     * @return boolean
+     * @param  array        $file  File data from \Zend\File\Transfer\Transfer (optional)
+     * @return bool
      */
-    public function isValid($value)
+    public function isValid($value, $file = null)
     {
-        if (is_array($value)) {
+        if (is_string($value) && is_array($file)) {
+            // Legacy Zend\Transfer API support
+            $filename = $file['name'];
+            $file     = $file['tmp_name'];
+        } elseif (is_array($value)) {
             if (!isset($value['tmp_name']) || !isset($value['name'])) {
                 throw new Exception\InvalidArgumentException(
                     'Value array must be in $_FILES format'
@@ -301,7 +302,7 @@ class Size extends AbstractValidator
     /**
      * Returns the formatted size
      *
-     * @param  integer $size
+     * @param  int $size
      * @return string
      */
     protected function toByteString($size)
@@ -318,12 +319,12 @@ class Size extends AbstractValidator
      * Returns the unformatted size
      *
      * @param  string $size
-     * @return integer
+     * @return int
      */
     protected function fromByteString($size)
     {
         if (is_numeric($size)) {
-            return (integer) $size;
+            return (int) $size;
         }
 
         $type  = trim(substr($size, -2, 1));

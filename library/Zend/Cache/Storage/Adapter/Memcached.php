@@ -3,9 +3,8 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
- * @package   Zend_Cache
  */
 
 namespace Zend\Cache\Storage\Adapter;
@@ -19,11 +18,6 @@ use Zend\Cache\Storage\Capabilities;
 use Zend\Cache\Storage\FlushableInterface;
 use Zend\Cache\Storage\TotalSpaceCapableInterface;
 
-/**
- * @package    Zend_Cache
- * @subpackage Zend_Cache_Storage
- * @subpackage Storage
- */
 class Memcached extends AbstractAdapter implements
     AvailableSpaceCapableInterface,
     FlushableInterface,
@@ -39,7 +33,7 @@ class Memcached extends AbstractAdapter implements
     /**
      * Has this instance be initialized
      *
-     * @var boolean
+     * @var bool
      */
     protected $initialized = false;
 
@@ -74,7 +68,7 @@ class Memcached extends AbstractAdapter implements
     {
         if (static::$extMemcachedMajorVersion === null) {
             $v = (string) phpversion('memcached');
-            static::$extMemcachedMajorVersion = ($v !== '') ? (int)$v[0] : 0;
+            static::$extMemcachedMajorVersion = ($v !== '') ? (int) $v[0] : 0;
         }
 
         if (static::$extMemcachedMajorVersion < 1) {
@@ -156,7 +150,7 @@ class Memcached extends AbstractAdapter implements
     /**
      * Flush the whole storage
      *
-     * @return boolean
+     * @return bool
      */
     public function flush()
     {
@@ -211,7 +205,7 @@ class Memcached extends AbstractAdapter implements
      * Internal method to get an item.
      *
      * @param  string  $normalizedKey
-     * @param  boolean $success
+     * @param  bool $success
      * @param  mixed   $casToken
      * @return mixed Data on success, null on failure
      * @throws Exception\ExceptionInterface
@@ -267,7 +261,7 @@ class Memcached extends AbstractAdapter implements
             $tmp            = array();
             $nsPrefixLength = strlen($this->namespacePrefix);
             foreach ($result as $internalKey => & $value) {
-                $tmp[ substr($internalKey, $nsPrefixLength) ] = & $value;
+                $tmp[substr($internalKey, $nsPrefixLength)] = & $value;
             }
             $result = $tmp;
         }
@@ -279,7 +273,7 @@ class Memcached extends AbstractAdapter implements
      * Internal method to test if an item exists.
      *
      * @param  string $normalizedKey
-     * @return boolean
+     * @return bool
      * @throws Exception\ExceptionInterface
      */
     protected function internalHasItem(& $normalizedKey)
@@ -359,7 +353,7 @@ class Memcached extends AbstractAdapter implements
             $tmp            = array();
             $nsPrefixLength = strlen($this->namespacePrefix);
             foreach (array_keys($result) as $internalKey) {
-                $tmp[ substr($internalKey, $nsPrefixLength) ] = array();
+                $tmp[substr($internalKey, $nsPrefixLength)] = array();
             }
             $result = $tmp;
         } else {
@@ -378,7 +372,7 @@ class Memcached extends AbstractAdapter implements
      *
      * @param  string $normalizedKey
      * @param  mixed  $value
-     * @return boolean
+     * @return bool
      * @throws Exception\ExceptionInterface
      */
     protected function internalSetItem(& $normalizedKey, & $value)
@@ -406,7 +400,7 @@ class Memcached extends AbstractAdapter implements
 
         $namespacedKeyValuePairs = array();
         foreach ($normalizedKeyValuePairs as $normalizedKey => & $value) {
-            $namespacedKeyValuePairs[ $this->namespacePrefix . $normalizedKey ] = & $value;
+            $namespacedKeyValuePairs[$this->namespacePrefix . $normalizedKey] = & $value;
         }
 
         if (!$memc->setMulti($namespacedKeyValuePairs, $expiration)) {
@@ -421,7 +415,7 @@ class Memcached extends AbstractAdapter implements
      *
      * @param  string $normalizedKey
      * @param  mixed  $value
-     * @return boolean
+     * @return bool
      * @throws Exception\ExceptionInterface
      */
     protected function internalAddItem(& $normalizedKey, & $value)
@@ -443,7 +437,7 @@ class Memcached extends AbstractAdapter implements
      *
      * @param  string $normalizedKey
      * @param  mixed  $value
-     * @return boolean
+     * @return bool
      * @throws Exception\ExceptionInterface
      */
     protected function internalReplaceItem(& $normalizedKey, & $value)
@@ -467,7 +461,7 @@ class Memcached extends AbstractAdapter implements
      * @param  mixed  $token
      * @param  string $normalizedKey
      * @param  mixed  $value
-     * @return boolean
+     * @return bool
      * @throws Exception\ExceptionInterface
      * @see    getItem()
      * @see    setItem()
@@ -493,7 +487,7 @@ class Memcached extends AbstractAdapter implements
      * Internal method to remove an item.
      *
      * @param  string $normalizedKey
-     * @return boolean
+     * @return bool
      * @throws Exception\ExceptionInterface
      */
     protected function internalRemoveItem(& $normalizedKey)
@@ -561,7 +555,7 @@ class Memcached extends AbstractAdapter implements
      *
      * @param  string $normalizedKey
      * @param  int    $value
-     * @return int|boolean The new value on success, false on failure
+     * @return int|bool The new value on success, false on failure
      * @throws Exception\ExceptionInterface
      */
     protected function internalIncrementItem(& $normalizedKey, & $value)
@@ -594,14 +588,14 @@ class Memcached extends AbstractAdapter implements
      *
      * @param  string $normalizedKey
      * @param  int    $value
-     * @return int|boolean The new value on success, false on failure
+     * @return int|bool The new value on success, false on failure
      * @throws Exception\ExceptionInterface
      */
     protected function internalDecrementItem(& $normalizedKey, & $value)
     {
         $memc        = $this->getMemcachedResource();
         $internalKey = $this->namespacePrefix . $normalizedKey;
-        $value       = (int)$value;
+        $value       = (int) $value;
         $newValue    = $memc->decrement($internalKey, $value);
 
         if ($newValue === false) {

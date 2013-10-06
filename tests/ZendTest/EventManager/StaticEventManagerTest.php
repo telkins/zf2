@@ -3,9 +3,8 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
- * @package   Zend_EventManager
  */
 
 namespace ZendTest\EventManager;
@@ -16,9 +15,6 @@ use Zend\EventManager\EventManager;
 use Zend\EventManager\StaticEventManager;
 
 /**
- * @category   Zend
- * @package    Zend_EventManager
- * @subpackage UnitTests
  * @group      Zend_EventManager
  */
 class StaticEventManagerTest extends TestCase
@@ -306,5 +302,29 @@ class StaticEventManagerTest extends TestCase
         });
         $manager->trigger('bar', $this, array());
         $this->assertEquals(4, $test->triggered);
+    }
+
+    public function testCanAttachListenerAggregate()
+    {
+        $staticManager = StaticEventManager::getInstance();
+        $aggregate = new TestAsset\SharedMockAggregate('bazinga');
+        $staticManager->attachAggregate($aggregate);
+
+        $events = $staticManager->getEvents('bazinga');
+        $this->assertCount(2, $events);
+    }
+
+    public function testCanDetachListenerAggregate()
+    {
+        $staticManager = StaticEventManager::getInstance();
+        $aggregate = new TestAsset\SharedMockAggregate('bazinga');
+
+        $staticManager->attachAggregate($aggregate);
+        $events = $staticManager->getEvents('bazinga');
+        $this->assertCount(2, $events);
+
+        $staticManager->detachAggregate($aggregate);
+        $events = $staticManager->getEvents('bazinga');
+        $this->assertCount(0, $events);
     }
 }

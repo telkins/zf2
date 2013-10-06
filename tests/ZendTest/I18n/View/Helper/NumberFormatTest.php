@@ -3,9 +3,8 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
- * @package   Zend_I18n
  */
 
 namespace ZendTest\I18n\View\Helper;
@@ -17,9 +16,6 @@ use Zend\I18n\View\Helper\NumberFormat as NumberFormatHelper;
 /**
  * Test class for Zend_View_Helper_Currency
  *
- * @category   Zend
- * @package    Zend_View
- * @subpackage UnitTests
  * @group      Zend_View
  * @group      Zend_View_Helper
  */
@@ -59,20 +55,39 @@ class NumberFormatTest extends \PHPUnit_Framework_TestCase
                 'de_DE',
                 NumberFormatter::DECIMAL,
                 NumberFormatter::TYPE_DOUBLE,
+                null,
                 1234567.891234567890000,
                 '1.234.567,891'
             ),
             array(
                 'de_DE',
+                NumberFormatter::DECIMAL,
+                NumberFormatter::TYPE_DOUBLE,
+                6,
+                1234567.891234567890000,
+                '1.234.567,891235',
+            ),
+            array(
+                'de_DE',
                 NumberFormatter::PERCENT,
                 NumberFormatter::TYPE_DOUBLE,
+                null,
                 1234567.891234567890000,
                 '123.456.789 %'
             ),
             array(
                 'de_DE',
+                NumberFormatter::PERCENT,
+                NumberFormatter::TYPE_DOUBLE,
+                1,
+                1234567.891234567890000,
+                '123.456.789,1 %'
+            ),
+            array(
+                'de_DE',
                 NumberFormatter::SCIENTIFIC,
                 NumberFormatter::TYPE_DOUBLE,
+                null,
                 1234567.891234567890000,
                 '1,23456789123457E6'
             ),
@@ -80,6 +95,7 @@ class NumberFormatTest extends \PHPUnit_Framework_TestCase
                 'ru_RU',
                 NumberFormatter::DECIMAL,
                 NumberFormatter::TYPE_DOUBLE,
+                null,
                 1234567.891234567890000,
                 '1 234 567,891'
             ),
@@ -87,6 +103,7 @@ class NumberFormatTest extends \PHPUnit_Framework_TestCase
                 'ru_RU',
                 NumberFormatter::PERCENT,
                 NumberFormatter::TYPE_DOUBLE,
+                null,
                 1234567.891234567890000,
                 '123 456 789 %'
             ),
@@ -94,6 +111,7 @@ class NumberFormatTest extends \PHPUnit_Framework_TestCase
                 'ru_RU',
                 NumberFormatter::SCIENTIFIC,
                 NumberFormatter::TYPE_DOUBLE,
+                null,
                 1234567.891234567890000,
                 '1,23456789123457E6'
             ),
@@ -101,6 +119,7 @@ class NumberFormatTest extends \PHPUnit_Framework_TestCase
                 'en_US',
                 NumberFormatter::DECIMAL,
                 NumberFormatter::TYPE_DOUBLE,
+                null,
                 1234567.891234567890000,
                 '1,234,567.891'
             ),
@@ -108,6 +127,7 @@ class NumberFormatTest extends \PHPUnit_Framework_TestCase
                 'en_US',
                 NumberFormatter::PERCENT,
                 NumberFormatter::TYPE_DOUBLE,
+                null,
                 1234567.891234567890000,
                 '123,456,789%'
             ),
@@ -115,6 +135,7 @@ class NumberFormatTest extends \PHPUnit_Framework_TestCase
                 'en_US',
                 NumberFormatter::SCIENTIFIC,
                 NumberFormatter::TYPE_DOUBLE,
+                null,
                 1234567.891234567890000,
                 '1.23456789123457E6'
             ),
@@ -124,21 +145,22 @@ class NumberFormatTest extends \PHPUnit_Framework_TestCase
     /**
      * @dataProvider currencyTestsDataProvider
      */
-    public function testBasic($locale, $formatStyle, $formatType, $number, $expected)
+    public function testBasic($locale, $formatStyle, $formatType, $decimals, $number, $expected)
     {
         $this->assertMbStringEquals($expected, $this->helper->__invoke(
-            $number, $formatStyle, $formatType, $locale
+            $number, $formatStyle, $formatType, $locale, $decimals
         ));
     }
 
     /**
      * @dataProvider currencyTestsDataProvider
      */
-    public function testSettersProvideDefaults($locale, $formatStyle, $formatType, $number, $expected)
+    public function testSettersProvideDefaults($locale, $formatStyle, $formatType, $decimals, $number, $expected)
     {
         $this->helper
              ->setLocale($locale)
              ->setFormatStyle($formatStyle)
+             ->setDecimals($decimals)
              ->setFormatType($formatType);
 
         $this->assertMbStringEquals($expected, $this->helper->__invoke($number));

@@ -3,23 +3,20 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
- * @package   Zend_Log
  */
 
 namespace Zend\Log;
 
 use DateTime;
+use ErrorException;
 use Traversable;
 use Zend\Stdlib\ArrayUtils;
 use Zend\Stdlib\SplPriorityQueue;
 
 /**
  * Logging messages with a stack of backends
- *
- * @category   Zend
- * @package    Zend_Log
  */
 class Logger implements LoggerInterface
 {
@@ -35,6 +32,40 @@ class Logger implements LoggerInterface
     const NOTICE = 5;
     const INFO   = 6;
     const DEBUG  = 7;
+
+    /**
+     * Map native PHP errors to priority
+     *
+     * @var array
+     */
+    public static $errorPriorityMap = array(
+        E_NOTICE            => self::NOTICE,
+        E_USER_NOTICE       => self::NOTICE,
+        E_WARNING           => self::WARN,
+        E_CORE_WARNING      => self::WARN,
+        E_USER_WARNING      => self::WARN,
+        E_ERROR             => self::ERR,
+        E_USER_ERROR        => self::ERR,
+        E_CORE_ERROR        => self::ERR,
+        E_RECOVERABLE_ERROR => self::ERR,
+        E_STRICT            => self::DEBUG,
+        E_DEPRECATED        => self::DEBUG,
+        E_USER_DEPRECATED   => self::DEBUG,
+    );
+
+    /**
+     * Registered error handler
+     *
+     * @var bool
+     */
+    protected static $registeredErrorHandler = false;
+
+    /**
+     * Registered exception handler
+     *
+     * @var bool
+     */
+    protected static $registeredExceptionHandler = false;
 
     /**
      * List of priority code => priority (short) name
@@ -81,20 +112,6 @@ class Logger implements LoggerInterface
     protected $processorPlugins;
 
     /**
-     * Registered error handler
-     *
-     * @var boolean
-     */
-    protected static $registeredErrorHandler = false;
-
-    /**
-     * Registered exception handler
-     *
-     * @var boolean
-     */
-    protected static $registeredExceptionHandler = false;
-
-    /**
      * Constructor
      *
      * Set options for an logger. Accepted options are:
@@ -102,7 +119,7 @@ class Logger implements LoggerInterface
      * - exceptionhandler: if true register this logger as exceptionhandler
      * - errorhandler: if true register this logger as errorhandler
      *
-     * @param  array|\Traversable $options
+     * @param  array|Traversable $options
      * @return Logger
      * @throws Exception\InvalidArgumentException
      */
@@ -115,11 +132,10 @@ class Logger implements LoggerInterface
         }
 
         if (is_array($options)) {
+            if (isset($options['writers']) && is_array($options['writers'])) {
+                foreach ($options['writers'] as $writer) {
 
-            if(isset($options['writers']) && is_array($options['writers'])) {
-                foreach($options['writers'] as $writer) {
-
-                    if(!isset($writer['name'])) {
+                    if (!isset($writer['name'])) {
                         throw new Exception\InvalidArgumentException('Options must contain a name for the writer');
                     }
 
@@ -130,12 +146,12 @@ class Logger implements LoggerInterface
                 }
             }
 
-            if(isset($options['exceptionhandler']) && $options['exceptionhandler'] === true) {
-                self::registerExceptionHandler($this);
+            if (isset($options['exceptionhandler']) && $options['exceptionhandler'] === true) {
+                static::registerExceptionHandler($this);
             }
 
-            if(isset($options['errorhandler']) && $options['errorhandler'] === true) {
-                self::registerErrorHandler($this);
+            if (isset($options['errorhandler']) && $options['errorhandler'] === true) {
+                static::registerErrorHandler($this);
             }
 
         }
@@ -221,7 +237,8 @@ class Logger implements LoggerInterface
             $writer = $this->writerPlugin($writer, $options);
         } elseif (!$writer instanceof Writer\WriterInterface) {
             throw new Exception\InvalidArgumentException(sprintf(
-                'Writer must implement Zend\Log\Writer; received "%s"',
+                'Writer must implement %s\Writer\WriterInterface; received "%s"',
+                __NAMESPACE__,
                 is_object($writer) ? get_class($writer) : gettype($writer)
             ));
         }
@@ -257,7 +274,6 @@ class Logger implements LoggerInterface
         $this->writers = $writers;
         return $this;
     }
-
 
     /**
      * Get processor plugin manager
@@ -394,7 +410,7 @@ class Logger implements LoggerInterface
             'extra'        => $extra
         );
 
-        foreach($this->processors->toArray() as $processor) {
+        foreach ($this->processors->toArray() as $processor) {
             $event = $processor->process($event);
         }
 
@@ -488,56 +504,44 @@ class Logger implements LoggerInterface
     /**
      * Register logging system as an error handler to log PHP errors
      *
-     * @link http://www.php.net/manual/en/function.set-error-handler.php
+     * @link http://www.php.net/manual/function.set-error-handler.php
      * @param  Logger $logger
-     * @return bool
+     * @param  bool   $continueNativeHandler
+     * @return mixed  Returns result of set_error_handler
      * @throws Exception\InvalidArgumentException if logger is null
      */
-    public static function registerErrorHandler(Logger $logger)
+    public static function registerErrorHandler(Logger $logger, $continueNativeHandler = false)
     {
         // Only register once per instance
         if (static::$registeredErrorHandler) {
             return false;
         }
 
-        if ($logger === null) {
-            throw new Exception\InvalidArgumentException('Invalid Logger specified');
-        }
+        $errorPriorityMap = static::$errorPriorityMap;
 
-        $errorHandlerMap = array(
-            E_NOTICE            => self::NOTICE,
-            E_USER_NOTICE       => self::NOTICE,
-            E_WARNING           => self::WARN,
-            E_CORE_WARNING      => self::WARN,
-            E_USER_WARNING      => self::WARN,
-            E_ERROR             => self::ERR,
-            E_USER_ERROR        => self::ERR,
-            E_CORE_ERROR        => self::ERR,
-            E_RECOVERABLE_ERROR => self::ERR,
-            E_STRICT            => self::DEBUG,
-            E_DEPRECATED        => self::DEBUG,
-            E_USER_DEPRECATED   => self::DEBUG
-        );
+        $previous = set_error_handler(function ($level, $message, $file, $line)
+            use ($logger, $errorPriorityMap, $continueNativeHandler)
+        {
+            $iniLevel = error_reporting();
 
-        set_error_handler(function ($errno, $errstr, $errfile, $errline, $errcontext) use ($errorHandlerMap, $logger) {
-            $errorLevel = error_reporting();
-
-            if ($errorLevel & $errno) {
-                if (isset($errorHandlerMap[$errno])) {
-                    $priority = $errorHandlerMap[$errno];
+            if ($iniLevel & $level) {
+                if (isset($errorPriorityMap[$level])) {
+                    $priority = $errorPriorityMap[$level];
                 } else {
                     $priority = Logger::INFO;
                 }
-                $logger->log($priority, $errstr, array(
-                    'errno' => $errno,
-                    'file' => $errfile,
-                    'line' => $errline,
-                    'context' => $errcontext
+                $logger->log($priority, $message, array(
+                    'errno'   => $level,
+                    'file'    => $file,
+                    'line'    => $line,
                 ));
             }
+
+            return !$continueNativeHandler;
         });
+
         static::$registeredErrorHandler = true;
-        return true;
+        return $previous;
     }
 
     /**
@@ -569,17 +573,39 @@ class Logger implements LoggerInterface
             throw new Exception\InvalidArgumentException('Invalid Logger specified');
         }
 
-        set_exception_handler(function ($exception) use ($logger) {
-            $extra = array(
-                'file'  => $exception->getFile(),
-                'line'  => $exception->getLine(),
-                'trace' => $exception->getTrace()
-            );
-            if (isset($exception->xdebug_message)) {
-                $extra['xdebug'] = $exception->xdebug_message;
+        $errorPriorityMap = static::$errorPriorityMap;
+
+        set_exception_handler(function ($exception) use ($logger, $errorPriorityMap) {
+            $logMessages = array();
+
+            do {
+                $priority = Logger::ERR;
+                if ($exception instanceof ErrorException && isset($errorPriorityMap[$exception->getSeverity()])) {
+                    $priority = $errorPriorityMap[$exception->getSeverity()];
+                }
+
+                $extra = array(
+                    'file'  => $exception->getFile(),
+                    'line'  => $exception->getLine(),
+                    'trace' => $exception->getTrace(),
+                );
+                if (isset($exception->xdebug_message)) {
+                    $extra['xdebug'] = $exception->xdebug_message;
+                }
+
+                $logMessages[] = array(
+                    'priority' => $priority,
+                    'message'  => $exception->getMessage(),
+                    'extra'    => $extra,
+                );
+                $exception = $exception->getPrevious();
+            } while ($exception);
+
+            foreach (array_reverse($logMessages) as $logMessage) {
+                $logger->log($logMessage['priority'], $logMessage['message'], $logMessage['extra']);
             }
-            $logger->log(Logger::ERR, $exception->getMessage(), $extra);
         });
+
         static::$registeredExceptionHandler = true;
         return true;
     }

@@ -3,9 +3,8 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
- * @package   Zend_Validator
  */
 
 namespace ZendTest\Validator;
@@ -13,9 +12,6 @@ namespace ZendTest\Validator;
 use Zend\Validator\ValidatorPluginManager;
 
 /**
- * @category   Zend
- * @package    Zend_Validator
- * @subpackage UnitTests
  * @group      Zend_Validator
  */
 class ValidatorPluginManagerTest extends \PHPUnit_Framework_TestCase
@@ -27,16 +23,16 @@ class ValidatorPluginManagerTest extends \PHPUnit_Framework_TestCase
 
     public function testAllowsInjectingTranslator()
     {
-        $translator = $this->getMock("Zend\I18n\Translator\Translator");
+        $translator = $this->getMock('ZendTest\Validator\TestAsset\Translator');
 
-        $slContents = array(array('translator', $translator));
+        $slContents = array(array('MvcTranslator', $translator));
         $serviceLocator = $this->getMock('Zend\ServiceManager\ServiceLocatorInterface');
         $serviceLocator->expects($this->once())
             ->method('get')
             ->will($this->returnValueMap($slContents));
         $serviceLocator->expects($this->once())
             ->method('has')
-            ->with($this->equalTo('translator'))
+            ->with($this->equalTo('MvcTranslator'))
             ->will($this->returnValue(true));
 
         $this->validators->setServiceLocator($serviceLocator);
@@ -51,7 +47,7 @@ class ValidatorPluginManagerTest extends \PHPUnit_Framework_TestCase
         $serviceLocator = $this->getMock('Zend\ServiceManager\ServiceLocatorInterface');
         $serviceLocator->expects($this->once())
             ->method('has')
-            ->with($this->equalTo('translator'))
+            ->with($this->equalTo('MvcTranslator'))
             ->will($this->returnValue(false));
 
         $this->validators->setServiceLocator($serviceLocator);
@@ -72,5 +68,11 @@ class ValidatorPluginManagerTest extends \PHPUnit_Framework_TestCase
         $this->validators->setInvokableClass('test', get_class($this));
         $this->setExpectedException('Zend\Validator\Exception\RuntimeException');
         $this->validators->get('test');
+    }
+
+    public function testInjectedValidatorPluginManager()
+    {
+        $validator = $this->validators->get('explode');
+        $this->assertSame($this->validators, $validator->getValidatorPluginManager());
     }
 }

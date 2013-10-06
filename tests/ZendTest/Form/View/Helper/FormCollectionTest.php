@@ -3,9 +3,8 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
- * @package   Zend_Form
  */
 
 namespace ZendTest\Form\View\Helper;
@@ -19,11 +18,6 @@ use ZendTest\Form\TestAsset\FormCollection;
 use ZendTest\Form\TestAsset\CustomViewHelper;
 use ZendTest\Form\TestAsset\CustomFieldsetHelper;
 
-/**
- * @category   Zend
- * @package    Zend_Form
- * @subpackage UnitTest
- */
 class FormCollectionTest extends TestCase
 {
     public $helper;
@@ -161,5 +155,25 @@ class FormCollectionTest extends TestCase
         $markup = $this->helper->renderTemplate($collection);
         $this->assertContains('<span data-template', $markup);
         $this->assertContains($collection->getTemplatePlaceholder(), $markup);
+    }
+
+    public function testCanTranslateLegend()
+    {
+        $form = $this->getForm();
+        $collection = $form->get('colors');
+        $collection->setLabel('untranslated legend');
+        $this->helper->setShouldWrap(true);
+
+        $mockTranslator = $this->getMock('Zend\I18n\Translator\Translator');
+        $mockTranslator->expects($this->exactly(1))
+                       ->method('translate')
+                       ->will($this->returnValue('translated legend'));
+
+        $this->helper->setTranslator($mockTranslator);
+        $this->assertTrue($this->helper->hasTranslator());
+
+        $markup = $this->helper->render($collection);
+
+        $this->assertContains('>translated legend<', $markup);
     }
 }

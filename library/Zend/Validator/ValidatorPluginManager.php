@@ -3,21 +3,15 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
- * @package   Zend_Validator
  */
 
 namespace Zend\Validator;
 
-use Zend\I18n\Translator\TranslatorAwareInterface;
 use Zend\ServiceManager\AbstractPluginManager;
 use Zend\ServiceManager\ConfigInterface;
 
-/**
- * @category   Zend
- * @package    Zend_Validator
- */
 class ValidatorPluginManager extends AbstractPluginManager
 {
     /**
@@ -62,17 +56,19 @@ class ValidatorPluginManager extends AbstractPluginManager
         'csrf'                     => 'Zend\Validator\Csrf',
         'date'                     => 'Zend\Validator\Date',
         'datestep'                 => 'Zend\Validator\DateStep',
+        'datetime'                 => 'Zend\I18n\Validator\DateTime',
         'dbnorecordexists'         => 'Zend\Validator\Db\NoRecordExists',
         'dbrecordexists'           => 'Zend\Validator\Db\RecordExists',
         'digits'                   => 'Zend\Validator\Digits',
         'emailaddress'             => 'Zend\Validator\EmailAddress',
         'explode'                  => 'Zend\Validator\Explode',
+        'filecount'                => 'Zend\Validator\File\Count',
         'filecrc32'                => 'Zend\Validator\File\Crc32',
         'fileexcludeextension'     => 'Zend\Validator\File\ExcludeExtension',
         'fileexcludemimetype'      => 'Zend\Validator\File\ExcludeMimeType',
         'fileexists'               => 'Zend\Validator\File\Exists',
-        'fileexplode'              => 'Zend\Validator\File\Explode',
         'fileextension'            => 'Zend\Validator\File\Extension',
+        'filefilessize'            => 'Zend\Validator\File\FilesSize',
         'filehash'                 => 'Zend\Validator\File\Hash',
         'fileimagesize'            => 'Zend\Validator\File\ImageSize',
         'fileiscompressed'         => 'Zend\Validator\File\IsCompressed',
@@ -83,6 +79,7 @@ class ValidatorPluginManager extends AbstractPluginManager
         'filesha1'                 => 'Zend\Validator\File\Sha1',
         'filesize'                 => 'Zend\Validator\File\Size',
         'fileupload'               => 'Zend\Validator\File\Upload',
+        'fileuploadfile'           => 'Zend\Validator\File\UploadFile',
         'filewordcount'            => 'Zend\Validator\File\WordCount',
         'float'                    => 'Zend\I18n\Validator\Float',
         'greaterthan'              => 'Zend\Validator\GreaterThan',
@@ -97,6 +94,7 @@ class ValidatorPluginManager extends AbstractPluginManager
         'isinstanceof'             => 'Zend\Validator\IsInstanceOf',
         'lessthan'                 => 'Zend\Validator\LessThan',
         'notempty'                 => 'Zend\Validator\NotEmpty',
+        'phonenumber'              => 'Zend\I18n\Validator\PhoneNumber',
         'postcode'                 => 'Zend\I18n\Validator\PostCode',
         'regex'                    => 'Zend\Validator\Regex',
         'sitemapchangefreq'        => 'Zend\Validator\Sitemap\Changefreq',
@@ -127,6 +125,7 @@ class ValidatorPluginManager extends AbstractPluginManager
     {
         parent::__construct($configuration);
         $this->addInitializer(array($this, 'injectTranslator'));
+        $this->addInitializer(array($this, 'injectValidatorPluginManager'));
     }
 
     /**
@@ -137,11 +136,24 @@ class ValidatorPluginManager extends AbstractPluginManager
      */
     public function injectTranslator($validator)
     {
-        if ($validator instanceof TranslatorAwareInterface) {
+        if ($validator instanceof Translator\TranslatorAwareInterface) {
             $locator = $this->getServiceLocator();
-            if ($locator && $locator->has('translator')) {
-                $validator->setTranslator($locator->get('translator'));
+            if ($locator && $locator->has('MvcTranslator')) {
+                $validator->setTranslator($locator->get('MvcTranslator'));
             }
+        }
+    }
+
+    /**
+     * Inject a validator plugin manager
+     *
+     * @param $validator
+     * @return void
+     */
+    public function injectValidatorPluginManager($validator)
+    {
+        if ($validator instanceof ValidatorPluginManagerAwareInterface) {
+            $validator->setValidatorPluginManager($this);
         }
     }
 

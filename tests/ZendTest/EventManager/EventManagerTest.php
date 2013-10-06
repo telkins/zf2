@@ -3,9 +3,8 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
- * @package   Zend_EventManager
  */
 
 namespace ZendTest\EventManager;
@@ -21,9 +20,6 @@ use Zend\EventManager\StaticEventManager;
 use Zend\Stdlib\CallbackHandler;
 
 /**
- * @category   Zend
- * @package    Zend_EventManager
- * @subpackage UnitTests
  * @group      Zend_EventManager
  */
 class EventManagerTest extends \PHPUnit_Framework_TestCase
@@ -546,22 +542,6 @@ class EventManagerTest extends \PHPUnit_Framework_TestCase
         $this->assertTrue($responses->stopped());
     }
 
-    public function testWeakRefsAreHonoredWhenTriggering()
-    {
-        if (!class_exists('WeakRef', false)) {
-            $this->markTestSkipped('Requires pecl/weakref');
-        }
-
-        $functor = new TestAsset\Functor;
-        $this->events->attach('test', $functor);
-
-        unset($functor);
-
-        $result = $this->events->trigger('test', $this, array());
-        $message = $result->last();
-        $this->assertNull($message);
-    }
-
     public function testDuplicateIdentifiersAreNotRegistered()
     {
         $events = new EventManager(array(__CLASS__, get_class($this)));
@@ -592,7 +572,12 @@ class EventManagerTest extends \PHPUnit_Framework_TestCase
         $this->assertSame($this->events->getIdentifiers(), $identifiers);
         $identifiers[] = 'baz';
         $this->assertInstanceOf('Zend\EventManager\EventManager', $this->events->addIdentifiers($identifiers));
-        $this->assertSame($this->events->getIdentifiers(), $identifiers);
+
+        // This is done because the keys doesn't matter, just the values
+        $expectedIdentifiers = $this->events->getIdentifiers();
+        sort($expectedIdentifiers);
+        sort($identifiers);
+        $this->assertSame($expectedIdentifiers, $identifiers);
     }
 
     public function testIdentifierGetterSettersWorkWithTraversables()
@@ -602,7 +587,13 @@ class EventManagerTest extends \PHPUnit_Framework_TestCase
         $this->assertSame($this->events->getIdentifiers(), (array) $identifiers);
         $identifiers = new ArrayIterator(array('foo', 'bar', 'baz'));
         $this->assertInstanceOf('Zend\EventManager\EventManager', $this->events->addIdentifiers($identifiers));
-        $this->assertSame($this->events->getIdentifiers(), (array) $identifiers);
+
+        // This is done because the keys doesn't matter, just the values
+        $expectedIdentifiers = $this->events->getIdentifiers();
+        sort($expectedIdentifiers);
+        $identifiers = (array) $identifiers;
+        sort($identifiers);
+        $this->assertSame($expectedIdentifiers, $identifiers);
     }
 
     public function testListenersAttachedWithWildcardAreTriggeredForAllEvents()
@@ -645,5 +636,38 @@ class EventManagerTest extends \PHPUnit_Framework_TestCase
     {
         StaticEventManager::resetInstance();
         $this->assertFalse($this->events->getSharedManager());
+    }
+
+    public function testTriggerSetsStopPropagationFlagToFalse()
+    {
+        $marker = (object) array('propagationIsStopped' => true);
+        $this->events->attach('foo', function ($e) use ($marker) {
+            $marker->propagationIsStopped = $e->propagationIsStopped();
+        });
+
+        $event = new Event();
+        $event->stopPropagation(true);
+        $this->events->trigger('foo', $event);
+
+        $this->assertFalse($marker->propagationIsStopped);
+        $this->assertFalse($event->propagationIsStopped());
+    }
+
+    public function testTriggerUntilSetsStopPropagationFlagToFalse()
+    {
+        $marker = (object) array('propagationIsStopped' => true);
+        $this->events->attach('foo', function ($e) use ($marker) {
+            $marker->propagationIsStopped = $e->propagationIsStopped();
+        });
+
+        $criteria = function ($r) {
+            return false;
+        };
+        $event = new Event();
+        $event->stopPropagation(true);
+        $this->events->triggerUntil('foo', $event, $criteria);
+
+        $this->assertFalse($marker->propagationIsStopped);
+        $this->assertFalse($event->propagationIsStopped());
     }
 }

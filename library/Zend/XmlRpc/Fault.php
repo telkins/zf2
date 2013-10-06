@@ -3,9 +3,8 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
- * @package   Zend_XmlRpc
  */
 
 namespace Zend\XmlRpc;
@@ -20,10 +19,7 @@ use SimpleXMLElement;
  * fault, as well as generating the XML for an XMLRPC fault response.
  *
  * To allow method chaining, you may only use the {@link getInstance()} factory
- * to instantiate a Zend_XmlRpc_Server_Fault.
- *
- * @category   Zend
- * @package    Zend_XmlRpc
+ * to instantiate a Zend\XmlRpc\Server\Fault.
  */
 class Fault
 {
@@ -171,7 +167,7 @@ class Fault
      * Load an XMLRPC fault from XML
      *
      * @param string $fault
-     * @return boolean Returns true if successfully loaded fault response, false
+     * @return bool Returns true if successfully loaded fault response, false
      * if response was not a fault response
      * @throws Exception\ExceptionInterface if no or faulty XML provided, or if fault
      * response does not contain either code or message
@@ -250,11 +246,11 @@ class Fault
      * Determine if an XML response is an XMLRPC fault
      *
      * @param string $xml
-     * @return boolean
+     * @return bool
      */
     public static function isFault($xml)
     {
-        $fault = new self();
+        $fault = new static();
         try {
             $isFault = $fault->loadXml($xml);
         } catch (Exception\ExceptionInterface $e) {

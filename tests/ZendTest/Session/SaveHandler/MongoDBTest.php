@@ -3,9 +3,8 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
- * @package   Zend_Session
  */
 
 namespace ZendTest\Session\SaveHandler;
@@ -15,15 +14,12 @@ use Zend\Session\SaveHandler\MongoDB;
 use Zend\Session\SaveHandler\MongoDBOptions;
 
 /**
- * @category   Zend
- * @package    Zend_Session
- * @subpackage UnitTests
  * @group      Zend_Session
  */
 class MongoDBTest extends \PHPUnit_Framework_TestCase
 {
     /**
-     * @var Mongo
+     * @var Mongo|MongoClient
      */
     protected $mongo;
 
@@ -55,7 +51,9 @@ class MongoDBTest extends \PHPUnit_Framework_TestCase
             'collection' => 'sessions',
         ));
 
-        $this->mongo = new Mongo();
+        $mongoClass = (version_compare(phpversion('mongo'), '1.3.0', '<')) ? '\Mongo' : '\MongoClient';
+
+        $this->mongo = new $mongoClass();
         $this->mongoCollection = $this->mongo->selectCollection($this->options->getDatabase(), $this->options->getCollection());
     }
 

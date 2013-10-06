@@ -4,9 +4,8 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
- * @package   Zend_Session
  */
 
 namespace Zend\Session\SaveHandler;
@@ -17,10 +16,6 @@ use Zend\Session\Exception\InvalidArgumentException;
 
 /**
  * MongoDB session save handler
- *
- * @category   Zend
- * @package    Zend_Session
- * @subpackage SaveHandler
  */
 class MongoDB implements SaveHandlerInterface
 {
@@ -54,12 +49,19 @@ class MongoDB implements SaveHandlerInterface
     /**
      * Constructor
      *
-     * @param Mongo $mongo
+     * @param Mongo|MongoClient $mongo
      * @param MongoDBOptions $options
      * @throws Zend\Session\Exception\InvalidArgumentException
      */
-    public function __construct(Mongo $mongo, MongoDBOptions $options)
+    public function __construct($mongo, MongoDBOptions $options)
     {
+        if (!($mongo instanceof \MongoClient || $mongo instanceof \Mongo)) {
+            throw new InvalidArgumentException(
+                'Parameter of type %s is invalid; must be MongoClient or Mongo',
+                (is_object($mongo) ? get_class($mongo) : gettype($mongo))
+            );
+        }
+
         if (null === ($database = $options->getDatabase())) {
             throw new InvalidArgumentException('The database option cannot be emtpy');
         }
@@ -77,7 +79,7 @@ class MongoDB implements SaveHandlerInterface
      *
      * @param string $savePath
      * @param string $name
-     * @return boolean
+     * @return bool
      */
     public function open($savePath, $name)
     {
@@ -91,7 +93,7 @@ class MongoDB implements SaveHandlerInterface
     /**
      * Close session
      *
-     * @return boolean
+     * @return bool
      */
     public function close()
     {
@@ -128,7 +130,7 @@ class MongoDB implements SaveHandlerInterface
      *
      * @param string $id
      * @param string $data
-     * @return boolean
+     * @return bool
      */
     public function write($id, $data)
     {
@@ -163,7 +165,7 @@ class MongoDB implements SaveHandlerInterface
      * Destroy session
      *
      * @param string $id
-     * @return boolean
+     * @return bool
      */
     public function destroy($id)
     {
@@ -186,7 +188,7 @@ class MongoDB implements SaveHandlerInterface
      *
      * @see http://docs.mongodb.org/manual/tutorial/expire-data/
      * @param int $maxlifetime
-     * @return boolean
+     * @return bool
      */
     public function gc($maxlifetime)
     {

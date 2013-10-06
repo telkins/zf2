@@ -3,9 +3,8 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
- * @package   Zend_Mvc
  */
 
 namespace ZendTest\Mvc\View;
@@ -26,11 +25,6 @@ use Zend\View\Model\ViewModel;
 use Zend\View\Resolver\TemplateMapResolver;
 use Zend\View\Strategy\PhpRendererStrategy;
 
-/**
- * @category   Zend
- * @package    Zend_Mvc
- * @subpackage UnitTest
- */
 class DefaultRenderingStrategyTest extends TestCase
 {
     protected $event;
@@ -56,23 +50,27 @@ class DefaultRenderingStrategyTest extends TestCase
 
     public function testAttachesRendererAtExpectedPriority()
     {
-        $events = new EventManager();
-        $events->attachAggregate($this->strategy);
-        $listeners = $events->getListeners(MvcEvent::EVENT_RENDER);
+        $evm = new EventManager();
+        $evm->attachAggregate($this->strategy);
+        $events = array(MvcEvent::EVENT_RENDER, MvcEvent::EVENT_RENDER_ERROR);
 
-        $expectedCallback = array($this->strategy, 'render');
-        $expectedPriority = -10000;
-        $found            = false;
-        foreach ($listeners as $listener) {
-            $callback = $listener->getCallback();
-            if ($callback === $expectedCallback) {
-                if ($listener->getMetadatum('priority') == $expectedPriority) {
-                    $found = true;
-                    break;
+        foreach ($events as $event) {
+            $listeners = $evm->getListeners($event);
+
+            $expectedCallback = array($this->strategy, 'render');
+            $expectedPriority = -10000;
+            $found            = false;
+            foreach ($listeners as $listener) {
+                $callback = $listener->getCallback();
+                if ($callback === $expectedCallback) {
+                    if ($listener->getMetadatum('priority') == $expectedPriority) {
+                        $found = true;
+                        break;
+                    }
                 }
             }
+            $this->assertTrue($found, 'Renderer not found');
         }
-        $this->assertTrue($found, 'Renderer not found');
     }
 
     public function testCanDetachListenersFromEventManager()
@@ -132,6 +130,7 @@ class DefaultRenderingStrategyTest extends TestCase
         $resolver = new TemplateMapResolver();
         $resolver->add('exception', __DIR__ . '/_files/exception.phtml');
         $this->renderer->setResolver($resolver);
+
         $strategy = new PhpRendererStrategy($this->renderer);
         $this->view->getEventManager()->attach($strategy);
 

@@ -4,9 +4,8 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
- * @package   Zend_Mvc
  */
 
 namespace ZendTest\Mvc\Controller\Plugin;
@@ -16,6 +15,7 @@ use Zend\Form\Form;
 use Zend\Http\Request;
 use Zend\Http\Response;
 use Zend\InputFilter\InputFilter;
+use Zend\Mvc\ModuleRouteListener;
 use Zend\Mvc\MvcEvent;
 use Zend\Mvc\Router\Http\Literal as LiteralRoute;
 use Zend\Mvc\Router\Http\Segment as SegmentRoute;
@@ -25,11 +25,6 @@ use Zend\Stdlib\Parameters;
 use ZendTest\Mvc\Controller\TestAsset\SampleController;
 use ZendTest\Session\TestAsset\TestManager as SessionManager;
 
-/**
- * @category   Zend
- * @package    Zend_Mvc
- * @subpackage UnitTests
- */
 class FilePostRedirectGetTest extends TestCase
 {
     public $form;
@@ -54,6 +49,13 @@ class FilePostRedirectGetTest extends TestCase
             'route' => '/foo/:param',
             'defaults' => array(
                 'param' => 1
+            )
+        )));
+
+        $router->addRoute('ctl', SegmentRoute::factory(array(
+            'route' => '/ctl/:controller',
+            'defaults' => array(
+                '__NAMESPACE__' => 'ZendTest\Mvc\Controller\TestAsset',
             )
         )));
 
@@ -235,5 +237,29 @@ class FilePostRedirectGetTest extends TestCase
 
         $this->assertEquals($params, $prgResult);
         $this->assertNotEmpty($messages['postval1']['isEmpty']);
+    }
+
+    public function testReuseMatchedParametersWithSegmentController()
+    {
+        $expects = '/ctl/sample';
+        $this->request->setMethod('POST');
+        $this->request->setUri($expects);
+        $this->request->setPost(new Parameters(array(
+            'postval1' => 'value1'
+        )));
+
+        $routeMatch = $this->event->getRouter()->match($this->request);
+        $this->event->setRouteMatch($routeMatch);
+
+        $moduleRouteListener = new ModuleRouteListener;
+        $moduleRouteListener->onRoute($this->event);
+
+        $this->controller->dispatch($this->request, $this->response);
+        $prgResultRoute = $this->controller->fileprg($this->form);
+
+        $this->assertInstanceOf('Zend\Http\Response', $prgResultRoute);
+        $this->assertTrue($prgResultRoute->getHeaders()->has('Location'));
+        $this->assertEquals($expects, $prgResultRoute->getHeaders()->get('Location')->getUri() , 'redirect to the same url');
+        $this->assertEquals(303, $prgResultRoute->getStatusCode());
     }
 }

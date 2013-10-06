@@ -3,9 +3,8 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
- * @package   Zend_Crypt
  */
 
 namespace Zend\Crypt\Key\Derivation;
@@ -15,8 +14,6 @@ use Zend\Crypt\Key\Derivation\Pbkdf2;
 /**
  * Scrypt key derivation function
  *
- * @category Zend
- * @package  Zend_Crypt
  * @see      http://www.tarsnap.com/scrypt.html
  * @see      https://tools.ietf.org/html/draft-josefsson-scrypt-kdf-01
  */
@@ -27,10 +24,10 @@ abstract class Scrypt
      *
      * @param  string $password
      * @param  string $salt
-     * @param  integer $n CPU cost
-     * @param  integer $r Memory cost
-     * @param  integer $p parallelization cost
-     * @param  integer $length size of the output key
+     * @param  int $n CPU cost
+     * @param  int $r Memory cost
+     * @param  int $p parallelization cost
+     * @param  int $length size of the output key
      * @return string
      */
     public static function calc($password, $salt, $n, $r, $p, $length)
@@ -66,8 +63,8 @@ abstract class Scrypt
     * scryptROMix
     *
     * @param  string $b
-    * @param  integer $n
-    * @param  integer $r
+    * @param  int $n
+    * @param  int $r
     * @return string
     * @see    https://tools.ietf.org/html/draft-josefsson-scrypt-kdf-01#section-4
     */
@@ -91,7 +88,7 @@ abstract class Scrypt
      * scryptBlockMix
      *
      * @param  string $b
-     * @param  integer $r
+     * @param  int $r
      * @return string
      * @see    https://tools.ietf.org/html/draft-josefsson-scrypt-kdf-01#section-3
      */
@@ -311,7 +308,7 @@ abstract class Scrypt
      * Each block B is a string of 64 bytes.
      *
      * @param  string $b
-     * @return integer
+     * @return int
      * @see    https://tools.ietf.org/html/draft-josefsson-scrypt-kdf-01#section-4
      */
     protected static function integerify($b)

@@ -3,9 +3,8 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
- * @package   Zend_Stdlib
  */
 
 namespace ZendTest\Stdlib;
@@ -28,6 +27,13 @@ class OptionsTest extends \PHPUnit_Framework_TestCase
     {
         $config = new ArrayObject(array('test_field' => 1));
         $options = new TestOptions($config);
+
+        $this->assertEquals(1, $options->test_field);
+    }
+
+    public function testConstructionWithOptions()
+    {
+        $options = new TestOptions(new TestOptions(array('test_field' => 1)));
 
         $this->assertEquals(1, $options->test_field);
     }

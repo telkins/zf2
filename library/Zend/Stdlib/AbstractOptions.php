@@ -3,19 +3,14 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
- * @package   Zend_Stdlib
  */
 
 namespace Zend\Stdlib;
 
 use Traversable;
 
-/**
- * @category   Zend
- * @package    Zend_Stdlib
- */
 abstract class AbstractOptions implements ParameterObjectInterface
 {
     /**
@@ -27,6 +22,8 @@ abstract class AbstractOptions implements ParameterObjectInterface
     protected $__strictMode__ = true;
 
     /**
+     * Constructor
+     *
      * @param  array|Traversable|null $options
      */
     public function __construct($options = null)
@@ -37,22 +34,29 @@ abstract class AbstractOptions implements ParameterObjectInterface
     }
 
     /**
-     * @param  array|Traversable $options
+     * Set one or more configuration properties
+     *
+     * @param  array|Traversable|AbstractOptions $options
      * @throws Exception\InvalidArgumentException
      * @return AbstractOptions Provides fluent interface
      */
     public function setFromArray($options)
     {
+        if ($options instanceof self) {
+            $options = $options->toArray();
+        }
+
         if (!is_array($options) && !$options instanceof Traversable) {
             throw new Exception\InvalidArgumentException(sprintf(
-                'Parameter provided to %s must be an array or Traversable',
-                __METHOD__
+                'Parameter provided to %s must be an %s, %s or %s',
+                __METHOD__, 'array', 'Traversable', 'Zend\Stdlib\AbstractOptions'
             ));
         }
 
         foreach ($options as $key => $value) {
             $this->__set($key, $value);
         }
+
         return $this;
     }
 
@@ -77,6 +81,8 @@ abstract class AbstractOptions implements ParameterObjectInterface
     }
 
     /**
+     * Set a configuration property
+     *
      * @see ParameterObject::__set()
      * @param string $key
      * @param mixed $value
@@ -99,6 +105,8 @@ abstract class AbstractOptions implements ParameterObjectInterface
     }
 
     /**
+     * Get a configuration property
+     *
      * @see ParameterObject::__get()
      * @param string $key
      * @throws Exception\BadMethodCallException
@@ -119,9 +127,10 @@ abstract class AbstractOptions implements ParameterObjectInterface
     }
 
     /**
+     * Test if a configuration property is null
      * @see ParameterObject::__isset()
      * @param string $key
-     * @return boolean
+     * @return bool
      */
     public function __isset($key)
     {
@@ -129,6 +138,8 @@ abstract class AbstractOptions implements ParameterObjectInterface
     }
 
     /**
+     * Set a configuration property to NULL
+     *
      * @see ParameterObject::__unset()
      * @param string $key
      * @throws Exception\InvalidArgumentException

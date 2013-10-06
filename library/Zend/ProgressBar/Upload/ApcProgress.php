@@ -3,9 +3,8 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
- * @package   Zend_ProgressBar
  */
 
 namespace Zend\ProgressBar\Upload;
@@ -16,15 +15,12 @@ use Zend\Stdlib\ArrayUtils;
 
 /**
  * Progress Bar Upload Handler for the APC extension
- *
- * @category  Zend
- * @package   Zend_ProgressBar
  */
 class ApcProgress extends AbstractUploadHandler
 {
     /**
      * @param  string $id
-     * @return array|boolean
+     * @return array|bool
      * @throws Exception\PhpEnvironmentException
      */
     protected function getUploadProgress($id)
@@ -57,7 +53,7 @@ class ApcProgress extends AbstractUploadHandler
     /**
      * Checks for the APC extension
      *
-     * @return boolean
+     * @return bool
      */
     public function isApcAvailable()
     {

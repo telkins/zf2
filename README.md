@@ -1,19 +1,19 @@
-### Welcome to the *Zend Framework 2.1* Release!
+### Welcome to the *Zend Framework 2.2* Release!
 
 Master: [![Build Status](https://secure.travis-ci.org/zendframework/zf2.png?branch=master)](http://travis-ci.org/zendframework/zf2)
 Develop: [![Build Status](https://secure.travis-ci.org/zendframework/zf2.png?branch=develop)](http://travis-ci.org/zendframework/zf2)
 
 ## RELEASE INFORMATION
 
-*Zend Framework 2.1.0dev*
+*Zend Framework 2.2.5dev*
 
-This is the first minor (feature) release for the 2.0 series.
+This is the fifth maintenance release for the 2.2 series.
 
-XX YYY 2012
+DD MMM YYYY
 
-### UPDATES IN 2.1.0
+### UPDATES IN 2.2.5
 
-Please see CHANGELOG.md.
+Please see [CHANGELOG.md](CHANGELOG.md).
 
 ### SYSTEM REQUIREMENTS
 
@@ -22,12 +22,12 @@ latest PHP version whenever possible.
 
 ### INSTALLATION
 
-Please see INSTALL.md.
+Please see [INSTALL.md](INSTALL.md).
 
 ### CONTRIBUTING
 
 If you wish to contribute to Zend Framework, please read both the
-CONTRIBUTING.md and README-GIT.md file.
+[CONTRIBUTING.md](CONTRIBUTING.md) and [README-GIT.md](README-GIT.md) file.
 
 ### QUESTIONS AND FEEDBACK
 
@@ -50,7 +50,7 @@ the fw-announce mailing list by sending a blank message to
 ### LICENSE
 
 The files in this archive are released under the Zend Framework license.
-You can find a copy of this license in LICENSE.txt.
+You can find a copy of this license in [LICENSE.txt](LICENSE.txt).
 
 ### ACKNOWLEDGEMENTS
 

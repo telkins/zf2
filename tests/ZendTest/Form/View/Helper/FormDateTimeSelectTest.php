@@ -3,9 +3,8 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
- * @package   Zend_Form
  */
 
 namespace ZendTest\Form\View\Helper;
@@ -13,11 +12,6 @@ namespace ZendTest\Form\View\Helper;
 use Zend\Form\Element\DateTimeSelect;
 use Zend\Form\View\Helper\FormDateTimeSelect as FormDateTimeSelectHelper;
 
-/**
- * @category   Zend
- * @package    Zend_Form
- * @subpackage UnitTest
- */
 class FormDateTimeSelectTest extends CommonTestCase
 {
     public function setUp()
@@ -71,6 +65,30 @@ class FormDateTimeSelectTest extends CommonTestCase
         $this->assertContains('<option value=""></option>', $markup);
     }
 
+    public function testCanDisableDelimiters()
+    {
+        $element = new DateTimeSelect('foo');
+        $element->setShouldCreateEmptyOption(true);
+        $element->setShouldRenderDelimiters(false);
+        $markup = $this->helper->render($element);
+
+        // If it contains two consecutive selects this means that no delimiters
+        // are inserted
+        $this->assertContains('</select><select', $markup);
+    }
+
+    public function testCanRenderTextDelimiters()
+    {
+        $element = new DateTimeSelect('foo');
+        $element->setShouldCreateEmptyOption(true);
+        $element->setShouldRenderDelimiters(true);
+        $element->setShouldShowSeconds(true);
+        $markup = $this->helper->__invoke($element, \IntlDateFormatter::LONG, \IntlDateFormatter::LONG, 'pt_BR');
+
+        // pattern === "d 'de' MMMM 'de' y HH'h'mm'min'ss's'"
+        $this->assertStringMatchesFormat('%a de %a de %a %ah%amin%as', $markup);
+    }
+
     public function testInvokeProxiesToRender()
     {
         $element = new DateTimeSelect('foo');
@@ -85,5 +103,26 @@ class FormDateTimeSelectTest extends CommonTestCase
     public function testInvokeWithNoElementChainsHelper()
     {
         $this->assertSame($this->helper, $this->helper->__invoke());
+    }
+
+    public function testNoMinutesDelimiterIfSecondsNotShown()
+    {
+        $element  = new DateTimeSelect('foo');
+        $element->setValue(array(
+            'year'   => '2012',
+            'month'  => '09',
+            'day'    => '24',
+            'hour'   => '03',
+            'minute' => '04',
+            'second' => '59',
+        ));
+
+        $element->setShouldShowSeconds(false);
+        $element->shouldRenderDelimiters(true);
+        $markup  = $this->helper->__invoke($element);
+
+        // the last $markup char should be the '>' of the minutes  html select
+        // closing tag and not the delimiter
+        $this->assertEquals('>', substr($markup, -1));
     }
 }

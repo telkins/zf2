@@ -3,9 +3,8 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
- * @package   Zend_Mvc
  */
 
 namespace Zend\Mvc\Router;
@@ -16,8 +15,6 @@ use Zend\Stdlib\RequestInterface as Request;
 
 /**
  * Simple route stack implementation.
- *
- * @package    Zend_Mvc_Router
  */
 class SimpleRouteStack implements RouteStackInterface
 {
@@ -44,11 +41,18 @@ class SimpleRouteStack implements RouteStackInterface
 
     /**
      * Create a new simple route stack.
+     *
+     * @param RoutePluginManager $routePluginManager
      */
-    public function __construct()
+    public function __construct(RoutePluginManager $routePluginManager = null)
     {
-        $this->routes             = new PriorityList();
-        $this->routePluginManager = new RoutePluginManager();
+        $this->routes = new PriorityList();
+
+        if (null === $routePluginManager) {
+            $routePluginManager = new RoutePluginManager();
+        }
+
+        $this->routePluginManager = $routePluginManager;
 
         $this->init();
     }
@@ -56,8 +60,8 @@ class SimpleRouteStack implements RouteStackInterface
     /**
      * factory(): defined by RouteInterface interface.
      *
-     * @see    Route::factory()
-     * @param  array|\Traversable $options
+     * @see    \Zend\Mvc\Router\RouteInterface::factory()
+     * @param  array|Traversable $options
      * @return SimpleRouteStack
      * @throws Exception\InvalidArgumentException
      */
@@ -69,11 +73,12 @@ class SimpleRouteStack implements RouteStackInterface
             throw new Exception\InvalidArgumentException(__METHOD__ . ' expects an array or Traversable set of options');
         }
 
-        $instance = new static();
-
+        $routePluginManager = null;
         if (isset($options['route_plugins'])) {
-            $instance->setRoutePluginManager($options['route_plugins']);
+            $routePluginManager = $options['route_plugins'];
         }
+
+        $instance = new static($routePluginManager);
 
         if (isset($options['routes'])) {
             $instance->addRoutes($options['routes']);
@@ -120,8 +125,8 @@ class SimpleRouteStack implements RouteStackInterface
     /**
      * addRoutes(): defined by RouteStackInterface interface.
      *
-     * @see    RouteStack::addRoutes()
-     * @param  array|\Traversable $routes
+     * @see    RouteStackInterface::addRoutes()
+     * @param  array|Traversable $routes
      * @return SimpleRouteStack
      * @throws Exception\InvalidArgumentException
      */
@@ -141,10 +146,10 @@ class SimpleRouteStack implements RouteStackInterface
     /**
      * addRoute(): defined by RouteStackInterface interface.
      *
-     * @see    RouteStack::addRoute()
+     * @see    RouteStackInterface::addRoute()
      * @param  string  $name
      * @param  mixed   $route
-     * @param  integer $priority
+     * @param  int $priority
      * @return SimpleRouteStack
      */
     public function addRoute($name, $route, $priority = null)
@@ -165,8 +170,8 @@ class SimpleRouteStack implements RouteStackInterface
     /**
      * removeRoute(): defined by RouteStackInterface interface.
      *
-     * @see    RouteStack::removeRoute()
-     * @param  string  $name
+     * @see    RouteStackInterface::removeRoute()
+     * @param  string $name
      * @return SimpleRouteStack
      */
     public function removeRoute($name)
@@ -178,7 +183,7 @@ class SimpleRouteStack implements RouteStackInterface
     /**
      * setRoutes(): defined by RouteStackInterface interface.
      *
-     * @param  array|\Traversable $routes
+     * @param  array|Traversable $routes
      * @return SimpleRouteStack
      */
     public function setRoutes($routes)
@@ -201,8 +206,8 @@ class SimpleRouteStack implements RouteStackInterface
     /**
      * Check if a route with a specific name exists
      *
-     * @param string $name
-     * @return boolean true if route exists
+     * @param  string $name
+     * @return bool true if route exists
      */
     public function hasRoute($name)
     {
@@ -248,7 +253,7 @@ class SimpleRouteStack implements RouteStackInterface
     /**
      * Create a route from array specifications.
      *
-     * @param  array|\Traversable $specs
+     * @param  array|Traversable $specs
      * @return SimpleRouteStack
      * @throws Exception\InvalidArgumentException
      */
@@ -278,7 +283,7 @@ class SimpleRouteStack implements RouteStackInterface
     /**
      * match(): defined by RouteInterface interface.
      *
-     * @see    Route::match()
+     * @see    \Zend\Mvc\Router\RouteInterface::match()
      * @param  Request $request
      * @return RouteMatch|null
      */
@@ -304,7 +309,7 @@ class SimpleRouteStack implements RouteStackInterface
     /**
      * assemble(): defined by RouteInterface interface.
      *
-     * @see    Route::assemble()
+     * @see    \Zend\Mvc\Router\RouteInterface::assemble()
      * @param  array $params
      * @param  array $options
      * @return mixed

@@ -3,9 +3,8 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
- * @package   Zend_Mvc
  */
 
 namespace Zend\Mvc\Service;
@@ -15,11 +14,6 @@ use Zend\ServiceManager\FactoryInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
 use Zend\ServiceManager\ServiceManager;
 
-/**
- * @category   Zend
- * @package    Zend_Mvc
- * @subpackage Service
- */
 class DiServiceInitializerFactory implements FactoryInterface
 {
     /**
@@ -30,13 +24,6 @@ class DiServiceInitializerFactory implements FactoryInterface
      */
     public function createService(ServiceLocatorInterface $serviceLocator)
     {
-        $initializer = new DiServiceInitializer($serviceLocator->get('Di'), $serviceLocator);
-
-        if ($serviceLocator instanceof ServiceManager) {
-            /* @var $serviceLocator ServiceManager */
-            $serviceLocator->addInitializer($initializer);
-        }
-
-        return $initializer;
+        return new DiServiceInitializer($serviceLocator->get('Di'), $serviceLocator);
     }
 }

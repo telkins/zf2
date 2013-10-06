@@ -3,16 +3,15 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
- * @package   Zend_Server
  */
 
 namespace Zend\Server\Reflection;
 
-use ReflectionFunctionAbstract;
 use ReflectionClass as PhpReflectionClass;
 use ReflectionFunction as PhpReflectionFunction;
+use ReflectionFunctionAbstract;
 use ReflectionMethod as PhpReflectionMethod;
 use Zend\Code\Reflection\DocBlockReflection;
 
@@ -25,10 +24,6 @@ use Zend\Code\Reflection\DocBlockReflection;
  * contents), retrieving the callback and callback type, retrieving additional
  * method invocation arguments, and retrieving the
  * method {@link \Zend\Server\Reflection\Prototype prototypes}.
- *
- * @category   Zend
- * @package    Zend_Server
- * @subpackage Zend_Server_Reflection
  */
 abstract class AbstractFunction
 {

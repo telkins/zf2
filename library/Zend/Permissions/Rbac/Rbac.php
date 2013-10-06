@@ -3,20 +3,14 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
- * @package   Zend_Permissions
  */
 
 namespace Zend\Permissions\Rbac;
 
 use RecursiveIteratorIterator;
 
-/**
- * @category   Zend
- * @package    Zend_Permissions
- * @subpackage Rbac
- */
 class Rbac extends AbstractIterator
 {
     /**
@@ -28,7 +22,7 @@ class Rbac extends AbstractIterator
     protected $createMissingRoles = false;
 
     /**
-     * @param  boolean                     $createMissingRoles
+     * @param  bool                     $createMissingRoles
      * @return \Zend\Permissions\Rbac\Rbac
      */
     public function setCreateMissingRoles($createMissingRoles)
@@ -39,7 +33,7 @@ class Rbac extends AbstractIterator
     }
 
     /**
-     * @return boolean
+     * @return bool
      */
     public function getCreateMissingRoles()
     {
@@ -49,8 +43,9 @@ class Rbac extends AbstractIterator
     /**
      * Add a child.
      *
-     * @param  string|AbstractRole                $child
-     * @return AbstractRole
+     * @param  string|RoleInterface               $child
+     * @param  array|RoleInterface|null           $parents
+     * @return self
      * @throws Exception\InvalidArgumentException
      */
     public function addRole($child, $parents = null)
@@ -58,9 +53,9 @@ class Rbac extends AbstractIterator
         if (is_string($child)) {
             $child = new Role($child);
         }
-        if (!$child instanceof AbstractRole) {
+        if (!$child instanceof RoleInterface) {
             throw new Exception\InvalidArgumentException(
-                'Child must be a string or instance of Zend\Permissions\Rbac\AbstractRole'
+                'Child must be a string or implement Zend\Permissions\Rbac\RoleInterface'
             );
         }
 
@@ -84,7 +79,7 @@ class Rbac extends AbstractIterator
     /**
      * Is a child with $name registered?
      *
-     * @param  \Zend\Permissions\Rbac\AbstractRole|string $objectOrName
+     * @param  \Zend\Permissions\Rbac\RoleInterface|string $objectOrName
      * @return bool
      */
     public function hasRole($objectOrName)
@@ -101,15 +96,15 @@ class Rbac extends AbstractIterator
     /**
      * Get a child.
      *
-     * @param  \Zend\Permissions\Rbac\AbstractRole|string $objectOrName
-     * @return AbstractRole
+     * @param  \Zend\Permissions\Rbac\RoleInterface|string $objectOrName
+     * @return RoleInterface
      * @throws Exception\InvalidArgumentException
      */
     public function getRole($objectOrName)
     {
-        if (!is_string($objectOrName) && !$objectOrName instanceof AbstractRole) {
+        if (!is_string($objectOrName) && !$objectOrName instanceof RoleInterface) {
             throw new Exception\InvalidArgumentException(
-                'Expected string or instance of \Zend\Permissions\Rbac\AbstractRole'
+                'Expected string or implement \Zend\Permissions\Rbac\RoleInterface'
             );
         }
 
@@ -129,8 +124,10 @@ class Rbac extends AbstractIterator
     /**
      * Determines if access is granted by checking the role and child roles for permission.
      *
-     * @param string                                                  $permission
-     * @param \Zend\Permissions\Rbac\AssertionInterface|Callable|null $assert
+     * @param  RoleInterface|string             $role
+     * @param  string                           $permission
+     * @param  AssertionInterface|Callable|null $assert
+     * @return bool
      */
     public function isGranted($role, $permission, $assert = null)
     {

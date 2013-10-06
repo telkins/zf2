@@ -3,23 +3,19 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
- * @package   Zend_Log
  */
 
 namespace Zend\Log\Writer;
 
+use Traversable;
 use Zend\Log\Writer\ChromePhp\ChromePhpBridge;
 use Zend\Log\Writer\ChromePhp\ChromePhpInterface;
 use Zend\Log\Formatter\ChromePhp as ChromePhpFormatter;
 use Zend\Log\Logger;
+use Zend\Log\Exception;
 
-/**
- * @category   Zend
- * @package    Zend_Log
- * @subpackage Writer
- */
 class ChromePhp extends AbstractWriter
 {
     /**
@@ -32,11 +28,24 @@ class ChromePhp extends AbstractWriter
     /**
      * Initializes a new instance of this class.
      *
-     * @param null|ChromePhpInterface $instance An instance of ChromePhpInterface
+     * @param null|ChromePhpInterface|array|Traversable $instance An instance of ChromePhpInterface
      *        that should be used for logging
      */
-    public function __construct(ChromePhpInterface $instance = null)
+    public function __construct($instance = null)
     {
+        if ($instance instanceof Traversable) {
+            $instance = iterator_to_array($instance);
+        }
+
+        if (is_array($instance)) {
+            parent::__construct($instance);
+            $instance = isset($instance['instance']) ? $instance['instance'] : null;
+        }
+
+        if (!($instance instanceof ChromePhpInterface || $instance === null)) {
+            throw new Exception\InvalidArgumentException('You must pass a valid Zend\Log\Writer\ChromePhp\ChromePhpInterface');
+        }
+
         $this->chromephp = $instance === null ? $this->getChromePhp() : $instance;
         $this->formatter = new ChromePhpFormatter();
     }

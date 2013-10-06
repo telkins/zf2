@@ -3,9 +3,8 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
- * @package   Zend_View
  */
 
 namespace Zend\View\Helper;
@@ -18,16 +17,13 @@ use Zend\View\Exception;
 /**
  * Helper for rendering a template fragment in its own variable scope; iterates
  * over data provided and renders for each iteration.
- *
- * @package    Zend_View
- * @subpackage Helper
  */
 class PartialLoop extends Partial
 {
     /**
      * Marker to where the pointer is at in the loop
      *
-     * @var integer
+     * @var int
      */
     protected $partialCounter = 0;
 
@@ -37,10 +33,10 @@ class PartialLoop extends Partial
      *
      * If no arguments are provided, returns object instance.
      *
-     * @param  string $name Name of view script
-     * @param  array $values Variables to populate in the view
-     * @return string
+     * @param  string $name   Name of view script
+     * @param  array  $values Variables to populate in the view
      * @throws Exception\InvalidArgumentException
+     * @return string
      */
     public function __invoke($name = null, $values = null)
     {
@@ -48,22 +44,14 @@ class PartialLoop extends Partial
             return $this;
         }
 
-        if (!is_array($values)
-            && (!$values instanceof Traversable)
-            && (is_object($values) && !method_exists($values, 'toArray'))
-        ) {
-            throw new Exception\InvalidArgumentException('PartialLoop helper requires iterable data');
-        }
-
-        if (is_object($values)
-            && (!$values instanceof Traversable)
-            && method_exists($values, 'toArray')
-        ) {
-            $values = $values->toArray();
-        }
-
-        if ($values instanceof Iterator) {
-            $values = ArrayUtils::iteratorToArray($values);
+        if (!is_array($values)) {
+            if ($values instanceof Traversable) {
+                $values = ArrayUtils::iteratorToArray($values);
+            } elseif (is_object($values) && method_exists($values, 'toArray')) {
+                $values = $values->toArray();
+            } else {
+                throw new Exception\InvalidArgumentException('PartialLoop helper requires iterable data');
+            }
         }
 
         // reset the counter if it's called again
