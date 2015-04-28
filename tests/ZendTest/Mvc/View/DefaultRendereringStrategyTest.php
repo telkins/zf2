@@ -3,7 +3,7 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
@@ -18,14 +18,13 @@ use Zend\Mvc\Application;
 use Zend\Mvc\MvcEvent;
 use Zend\Mvc\View\Http\DefaultRenderingStrategy;
 use Zend\ServiceManager\ServiceManager;
-use Zend\View\Model\ModelInterface as Model;
 use Zend\View\Renderer\PhpRenderer;
 use Zend\View\View;
 use Zend\View\Model\ViewModel;
 use Zend\View\Resolver\TemplateMapResolver;
 use Zend\View\Strategy\PhpRendererStrategy;
 
-class DefaultRenderingStrategyTest extends TestCase
+class DefaultRendereringStrategyTest extends TestCase
 {
     protected $event;
     protected $request;
@@ -153,7 +152,7 @@ class DefaultRenderingStrategyTest extends TestCase
         $this->event->setApplication($application);
 
         $test = (object) array('flag' => false);
-        $application->getEventManager()->attach('render.error', function ($e) use ($test) {
+        $application->getEventManager()->attach(MvcEvent::EVENT_RENDER_ERROR, function ($e) use ($test) {
             $test->flag      = true;
             $test->error     = $e->getError();
             $test->exception = $e->getParam('exception');

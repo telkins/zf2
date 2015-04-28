@@ -3,7 +3,7 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
@@ -85,6 +85,16 @@ class ServerUrlTest extends \PHPUnit_Framework_TestCase
 
         $url = new Helper\ServerUrl();
         $this->assertEquals('https://example.com:8181', $url->__invoke());
+    }
+
+    public function testConstructorWithHostReversedProxyHttpsTrue()
+    {
+        $_SERVER['HTTP_HOST'] = 'example.com';
+        $_SERVER['HTTP_X_FORWARDED_PROTO'] = 'https';
+        $_SERVER['SERVER_PORT'] = 80;
+
+        $url = new Helper\ServerUrl();
+        $this->assertEquals('https://example.com', $url->__invoke());
     }
 
     public function testConstructorWithHttpHostIncludingPortAndPortSet()

@@ -3,7 +3,7 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
@@ -11,13 +11,21 @@ namespace ZendTest\Form\View\Helper;
 
 use PHPUnit_Framework_TestCase as TestCase;
 use Zend\Form\Element;
+use Zend\Form\Element\Captcha;
 use Zend\Form\View\HelperConfig;
 use Zend\Form\View\Helper\FormRow as FormRowHelper;
 use Zend\View\Renderer\PhpRenderer;
 
 class FormRowTest extends TestCase
 {
+    /**
+     * @var FormRowHelper
+     */
     protected $helper;
+
+    /**
+     * @var PhpRenderer
+     */
     protected $renderer;
 
     public function setUp()
@@ -64,6 +72,32 @@ class FormRowTest extends TestCase
         $this->assertContains('</label>', $markup);
     }
 
+    public function testCanOverrideLabelPosition()
+    {
+        $fooElement = new Element('foo');
+        $fooElement->setOptions(array(
+            'label'         => 'The value for foo:',
+            'label_options' => array(
+                'label_position' =>'prepend'
+            ),
+        ));
+
+        $barElement = new Element('bar');
+        $barElement->setOptions(array(
+            'label' => 'The value for bar:',
+        ));
+
+        $this->helper->setLabelPosition('append');
+
+        $fooMarkup = $this->helper->render($fooElement);
+        $this->assertContains('<label><span>The value for foo:</span><', $fooMarkup);
+        $this->assertContains('</label>', $fooMarkup);
+
+        $barMarkup = $this->helper->render($barElement);
+        $this->assertContains('<label><', $barMarkup);
+        $this->assertContains('<span>The value for bar:</span></label>', $barMarkup);
+    }
+
     public function testCanRenderRowLabelAttributes()
     {
         $element = new Element('foo');
@@ -80,6 +114,14 @@ class FormRowTest extends TestCase
         $element->setAttribute('type', 'text');
         $markup = $this->helper->render($element);
         $this->assertRegexp('/<input name="foo" type="text"[^\/>]*\/?>/', $markup);
+    }
+
+    public function testIgnoreLabelForHidden()
+    {
+        $element = new Element\Hidden('foo');
+        $element->setLabel('My label');
+        $markup = $this->helper->render($element);
+        $this->assertEquals('<input type="hidden" name="foo" value=""/>', $markup);
     }
 
     public function testCanHandleMultiCheckboxesCorrectly()
@@ -158,7 +200,7 @@ class FormRowTest extends TestCase
         $element->setAttribute('class', 'foo bar');
 
         $markup = $this->helper->setInputErrorClass('custom-error-class')->render($element);
-        $this->assertRegexp('/<input name="foo" class="foo bar custom-error-class" type="text" [^\/>]*\/?>/', $markup);
+        $this->assertRegexp('/<input name="foo" class="foo\&\#x20\;bar\&\#x20\;custom-error-class" type="text" [^\/>]*\/?>/', $markup);
     }
 
     public function testInvokeWithNoElementChainsHelper()
@@ -204,14 +246,6 @@ class FormRowTest extends TestCase
 
         $this->helper->setTranslatorEnabled(false);
         $this->assertFalse($this->helper->isTranslatorEnabled());
-    }
-
-    public function testInvokeSetLabelPositionToAppend()
-    {
-        $element = new Element('foo');
-        $this->helper->__invoke($element, 'append');
-
-        $this->assertSame('append', $this->helper->getLabelPosition());
     }
 
     public function testSetLabelPositionInputNullRaisesException()
@@ -304,7 +338,7 @@ class FormRowTest extends TestCase
     {
         $element = new  Element\Date('birth');
         $element->setFormat('Y-m-d');
-        $element->setValue('2010-13-13');
+        $element->setValue('2010.13');
 
         $validator = new \Zend\Validator\Date();
         $validator->isValid($element->getValue());
@@ -367,6 +401,31 @@ class FormRowTest extends TestCase
         $this->assertRegexp('#^<button type="button" name="button" value=""\/?>foo</button>$#', $markup);
     }
 
+    public function testAssertLabelHtmlEscapeIsOnByDefault()
+    {
+        $element = new Element('fooname');
+        $escapeHelper = $this->renderer->getHelperPluginManager()->get('escapeHtml');
+
+        $label = '<span>foo</span>';
+        $element->setLabel($label);
+
+        $markup = $this->helper->__invoke($element);
+
+        $this->assertContains($escapeHelper->__invoke($label), $markup);
+    }
+
+    public function testCanDisableLabelHtmlEscape()
+    {
+        $label = '<span>foo</span>';
+        $element = new Element('fooname');
+        $element->setLabel($label);
+        $element->setLabelOptions(array('disable_html_escape' => true));
+
+        $markup = $this->helper->__invoke($element);
+
+        $this->assertContains($label, $markup);
+    }
+
     public function testCanSetLabelPositionBeforeInvoke()
     {
         $element = new Element('foo');
@@ -375,5 +434,102 @@ class FormRowTest extends TestCase
         $this->helper->__invoke($element);
 
         $this->assertSame('append', $this->helper->getLabelPosition());
+    }
+
+    /**
+     * @covers Zend\Form\View\Helper\FormRow::render
+     */
+    public function testCanSetLabelPositionViaRender()
+    {
+        $element  = new Element('foo');
+        $element->setAttribute('id', 'bar');
+        $element->setLabel('Baz');
+
+        $markup = $this->helper->render($element, 'append');
+        $this->assertRegexp('#^<input name="foo" id="bar" type="text" value=""\/?><label for="bar">Baz</label>$#', $markup);
+
+        $markup = $this->helper->render($element, 'prepend');
+        $this->assertRegexp('#^<label for="bar">Baz</label><input name="foo" id="bar" type="text" value=""\/?>$#', $markup);
+    }
+
+    public function testSetLabelPositionViaRenderIsNotCached()
+    {
+        $labelPositionBeforeRender = $this->helper->getLabelPosition();
+        $element = new Element('foo');
+
+        $this->helper->render($element, 'append');
+        $this->assertSame($labelPositionBeforeRender, $this->helper->getLabelPosition());
+
+        $this->helper->render($element, 'prepend');
+        $this->assertSame($labelPositionBeforeRender, $this->helper->getLabelPosition());
+    }
+
+    /**
+     * @covers Zend\Form\View\Helper\FormRow::__invoke
+     */
+    public function testCanSetLabelPositionViaInvoke()
+    {
+        $element  = new Element('foo');
+        $element->setAttribute('id', 'bar');
+        $element->setLabel('Baz');
+
+        $markup = $this->helper->__invoke($element, 'append');
+        $this->assertRegexp('#^<input name="foo" id="bar" type="text" value=""\/?><label for="bar">Baz</label>$#', $markup);
+
+        $markup = $this->helper->__invoke($element, 'prepend');
+        $this->assertRegexp('#^<label for="bar">Baz</label><input name="foo" id="bar" type="text" value=""\/?>$#', $markup);
+    }
+
+    /**
+     * @covers Zend\Form\View\Helper\FormRow::__invoke
+     */
+    public function testSetLabelPositionViaInvokeIsNotCached()
+    {
+        $labelPositionBeforeRender = $this->helper->getLabelPosition();
+        $element = new Element('foo');
+
+        $this->helper->__invoke($element, 'append');
+        $this->assertSame($labelPositionBeforeRender, $this->helper->getLabelPosition());
+
+        $this->helper->__invoke($element, 'prepend');
+        $this->assertSame($labelPositionBeforeRender, $this->helper->getLabelPosition());
+    }
+
+    public function testLabelOptionAlwaysWrapDefaultsToFalse()
+    {
+        $element = new Element('foo');
+        $this->assertEmpty($element->getLabelOption('always_wrap'));
+    }
+
+    public function testCanSetOptionToWrapElementInLabel()
+    {
+        $element = new Element('foo', array(
+            'label_options' => array(
+                'always_wrap' => true
+            )
+        ));
+        $element->setAttribute('id', 'bar');
+        $element->setLabel('baz');
+
+        $markup = $this->helper->render($element);
+        $this->assertRegexp('#^<label><span>baz</span><input name="foo" id="bar" type="text" value=""\/?></label>$#', $markup);
+    }
+
+    /**
+     * @group 7030
+     */
+    public function testWrapFieldsetAroundCaptchaWithLabel()
+    {
+        $this->assertRegexp(
+            '#^<fieldset><legend>baz<\/legend>'
+            . 'Please type this word backwards <b>[a-z0-9]{8}<\/b>'
+            . '<input name="captcha&\#x5B;id&\#x5D;" type="hidden" value="[a-z0-9]{32}"\/?>'
+            . '<input name="captcha&\#x5B;input&\#x5D;" type="text"\/?>'
+            . '<\/fieldset>$#',
+            $this->helper->render(new Captcha('captcha', array(
+                'captcha' => array('class' => 'dumb'),
+                'label' => 'baz'
+            )))
+        );
     }
 }

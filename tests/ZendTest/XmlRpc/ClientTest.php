@@ -3,7 +3,7 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
@@ -23,25 +23,27 @@ use Zend\XmlRpc;
 class ClientTest extends \PHPUnit_Framework_TestCase
 {
     /**
-     * @var Zend_Http_Client_Adapter_Abstract
+     * @var \Zend\Http\Client\Adapter\AdapterInterface
      */
     protected $httpAdapter;
 
     /**
-     * @var Zend_Http_Client
+     * @var \Zend\Http\Client
      */
     protected $httpClient;
 
     /**
-     * @var Zend_XmlRpc_Client
+     * @var \Zend\XmlRpc\Client
      */
     protected $xmlrpcClient;
 
     public function setUp()
     {
         $this->httpAdapter = new Adapter\Test();
-        $this->httpClient = new Http\Client('http://foo',
-                                    array('adapter' => $this->httpAdapter));
+        $this->httpClient = new Http\Client(
+            'http://foo',
+            array('adapter' => $this->httpAdapter)
+        );
 
         $this->xmlrpcClient = new Client('http://foo');
         $this->xmlrpcClient->setHttpClient($this->httpClient);
@@ -67,7 +69,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         $this->assertSame($httpClient, $xmlrpcClient->getHttpClient());
     }
 
-    public function testSettingHttpClientViaContructor()
+    public function testSettingHttpClientViaConstructor()
     {
         $xmlrpcClient = new Client('http://foo', $this->httpClient);
         $httpClient   = $xmlrpcClient->getHttpClient();
@@ -194,7 +196,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         $params = array(
             new Value\Boolean(true),
             new Value\Integer(4),
-            new Value\String('foo')
+            new Value\Text('foo')
         );
         $expect = array(true, 4, 'foo');
 
@@ -259,7 +261,13 @@ class ClientTest extends \PHPUnit_Framework_TestCase
 
         $expects = 'date.method response';
         $this->setServerResponseTo($expects);
-        $this->assertSame($expects, $this->xmlrpcClient->call('date.method', array(AbstractValue::getXmlRpcValue(time(), AbstractValue::XMLRPC_TYPE_DATETIME), 'foo')));
+        $this->assertSame(
+            $expects,
+            $this->xmlrpcClient->call(
+                'date.method',
+                array(AbstractValue::getXmlRpcValue(time(), AbstractValue::XMLRPC_TYPE_DATETIME), 'foo')
+            )
+        );
     }
 
     public function testAllowsSkippingSystemCallForArrayStructLookup()
@@ -482,7 +490,10 @@ class ClientTest extends \PHPUnit_Framework_TestCase
 
         $i = $this->xmlrpcClient->getIntrospector();
 
-        $this->setExpectedException('Zend\XmlRpc\Client\Exception\IntrospectException', 'Bad number of signatures received from multicall');
+        $this->setExpectedException(
+            'Zend\XmlRpc\Client\Exception\IntrospectException',
+            'Bad number of signatures received from multicall'
+        );
         $i->getSignatureForEachMethodByMulticall();
     }
 
@@ -501,7 +512,10 @@ class ClientTest extends \PHPUnit_Framework_TestCase
 
         $i = $this->xmlrpcClient->getIntrospector();
 
-        $this->setExpectedException('Zend\XmlRpc\Client\Exception\IntrospectException', 'Multicall return is malformed.  Expected array, got integer');
+        $this->setExpectedException(
+            'Zend\XmlRpc\Client\Exception\IntrospectException',
+            'Multicall return is malformed.  Expected array, got integer'
+        );
         $i->getSignatureForEachMethodByMulticall();
     }
 
@@ -596,9 +610,12 @@ class ClientTest extends \PHPUnit_Framework_TestCase
     {
         $introspector = new Client\ServerIntrospection(
             new TestClient('http://localhost/')
-            );
+        );
 
-        $this->setExpectedException('Zend\XmlRpc\Client\Exception\IntrospectException', 'Invalid signature for method "add"');
+        $this->setExpectedException(
+            'Zend\XmlRpc\Client\Exception\IntrospectException',
+            'Invalid signature for method "add"'
+        );
         $signature = $introspector->getMethodSignature('add');
     }
 
@@ -619,21 +636,21 @@ class ClientTest extends \PHPUnit_Framework_TestCase
                  array('parameters' => array('array'))
              )));
 
-          $expectedResult = 'array';
-          $this->setServerResponseTo($expectedResult);
+        $expectedResult = 'array';
+        $this->setServerResponseTo($expectedResult);
 
-          $this->assertSame(
-              $expectedResult,
-              $this->xmlrpcClient->call('get', array(array(1)))
-          );
+        $this->assertSame(
+            $expectedResult,
+            $this->xmlrpcClient->call('get', array(array(1)))
+        );
 
-          $expectedResult = 'integer';
-          $this->setServerResponseTo($expectedResult);
+        $expectedResult = 'integer';
+        $this->setServerResponseTo($expectedResult);
 
-          $this->assertSame(
-              $expectedResult,
-              $this->xmlrpcClient->call('get', array(1))
-          );
+        $this->assertSame(
+            $expectedResult,
+            $this->xmlrpcClient->call('get', array(1))
+        );
     }
 
     /**
@@ -671,7 +688,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         return $response;
     }
 
-    public function makeHttpResponseFrom($data, $status=200, $message='OK')
+    public function makeHttpResponseFrom($data, $status = 200, $message = 'OK')
     {
         $headers = array("HTTP/1.1 $status $message",
                          "Status: $status",

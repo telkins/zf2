@@ -3,7 +3,7 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
@@ -91,6 +91,9 @@ class FormInputTest extends CommonTestCase
         $this->$assertion($expected, $markup);
     }
 
+    /**
+     * @return array
+     */
     public function validAttributes()
     {
         return array(
@@ -177,6 +180,7 @@ class FormInputTest extends CommonTestCase
             array('ontimeupdate', 'assertContains'),
             array('onvolumechange', 'assertContains'),
             array('onwaiting', 'assertContains'),
+            array('role', 'assertContains'),
         );
     }
 
@@ -204,6 +208,7 @@ class FormInputTest extends CommonTestCase
             array('optgroup', 'assertNotContains'),
             array('arbitrary', 'assertNotContains'),
             array('meta', 'assertNotContains'),
+            array('role', 'assertContains'),
         );
     }
 
@@ -214,7 +219,7 @@ class FormInputTest extends CommonTestCase
             'accept'             => 'value',
             'accesskey'          => 'value',
             'alt'                => 'value',
-            'autocomplete'       => 'on',
+            'autocomplete'       => 'postal-code',
             'autofocus'          => 'autofocus',
             'checked'            => 'checked',
             'class'              => 'value',
@@ -315,6 +320,7 @@ class FormInputTest extends CommonTestCase
             'optgroup'           => 'value',
             'arbitrary'          => 'value',
             'meta'               => 'value',
+            'role'               => 'value',
         ));
         $element->setValue('value');
         return $element;
@@ -322,6 +328,7 @@ class FormInputTest extends CommonTestCase
 
     /**
      * @dataProvider validAttributes
+     * @return       void
      */
     public function testAllValidFormMarkupAttributesPresentInElementAreRendered($attribute, $assertion)
     {
@@ -329,31 +336,10 @@ class FormInputTest extends CommonTestCase
         $markup  = $this->helper->render($element);
         switch ($attribute) {
             case 'value':
-                $expect  = sprintf('%s="%s"', $attribute, $element->getValue());
+                $expect  = sprintf(' %s="%s"', $attribute, $element->getValue());
                 break;
             default:
-                $expect  = sprintf('%s="%s"', $attribute, $element->getAttribute($attribute));
-                break;
-        }
-        $this->$assertion($expect, $markup);
-    }
-
-    /**
-     * Split into 2 as 5.3.3 was segfaulting, and the segfault appears to be due
-     * to number of items in the data provider.
-     *
-     * @dataProvider validAttributes2
-     */
-    public function testAllValidFormMarkupAttributesPresentInElementAreRendered2($attribute, $assertion)
-    {
-        $element = $this->getCompleteElement();
-        $markup  = $this->helper->render($element);
-        switch ($attribute) {
-            case 'value':
-                $expect  = sprintf('%s="%s"', $attribute, $element->getValue());
-                break;
-            default:
-                $expect  = sprintf('%s="%s"', $attribute, $element->getAttribute($attribute));
+                $expect  = sprintf(' %s="%s"', $attribute, $element->getAttribute($attribute));
                 break;
         }
         $this->$assertion($expect, $markup);
@@ -404,10 +390,14 @@ class FormInputTest extends CommonTestCase
         $this->assertContains('/>', $markup);
     }
 
+    /**
+     * Data provider
+     *
+     * @return string[][]
+     */
     public function booleanAttributeTypes()
     {
         return array(
-            array('autocomplete', 'on', 'off'),
             array('autofocus', 'autofocus', ''),
             array('disabled', 'disabled', ''),
             array('multiple', 'multiple', ''),
@@ -490,7 +480,7 @@ class FormInputTest extends CommonTestCase
 
         $markup = $this->helper->__invoke($element);
 
-        $this->assertContains('placeholder="translated string"', $markup);
+        $this->assertContains('placeholder="translated&#x20;string"', $markup);
     }
 
     public function testCanTranslateTitle()
@@ -511,6 +501,18 @@ class FormInputTest extends CommonTestCase
 
         $markup = $this->helper->__invoke($element);
 
-        $this->assertContains('title="translated string"', $markup);
+        $this->assertContains('title="translated&#x20;string"', $markup);
+    }
+
+    /**
+     * @group 7166
+     */
+    public function testPasswordValueShouldNotBeRendered()
+    {
+        $element = new Element('foo');
+        $element->setAttribute('type', 'password');
+
+        $markup  = $this->helper->__invoke($element);
+        $this->assertContains('value=""', $markup);
     }
 }

@@ -3,7 +3,7 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
@@ -185,5 +185,65 @@ class ArrayInputTest extends InputTest
         $validators = $validatorChain->getValidators();
         $this->assertEquals(2, count($validators));
         $this->assertEquals($notEmptyMock, $validators[1]['instance']);
+    }
+
+    public function dataFallbackValue()
+    {
+        return array(
+            array(
+                'fallbackValue' => array()
+            ),
+            array(
+                'fallbackValue' => array(''),
+            ),
+            array(
+                'fallbackValue' => array(null),
+            ),
+            array(
+                'fallbackValue' => array('some value'),
+            ),
+        );
+    }
+
+    /**
+     * @dataProvider dataFallbackValue
+     */
+    public function testFallbackValue($fallbackValue)
+    {
+        $this->input->setFallbackValue($fallbackValue);
+        $validator = new Validator\Date();
+        $this->input->getValidatorChain()->attach($validator);
+        $this->input->setValue(array('123')); // not a date
+
+        $this->assertTrue($this->input->isValid());
+        $this->assertEmpty($this->input->getMessages());
+        $this->assertSame($fallbackValue, $this->input->getValue());
+    }
+
+    public function emptyValuesProvider()
+    {
+        return array(
+            array(array(null)),
+            array(array('')),
+            array(array(array())),
+        );
+    }
+
+    public function testNotAllowEmptyWithFilterConvertsNonemptyToEmptyIsNotValid()
+    {
+        $this->input->setValue(array('nonempty'))
+                    ->getFilterChain()->attach(new Filter\Callback(function () {
+                        return '';
+                    }));
+        $this->assertFalse($this->input->isValid());
+    }
+
+    public function testNotAllowEmptyWithFilterConvertsEmptyToNonEmptyIsValid()
+    {
+        $this->input->setValue(array(''))
+                    ->getFilterChain()->attach(new Filter\Callback(function () {
+                        return 'nonempty';
+                    }));
+        $this->assertTrue($this->input->isValid());
     }
 }

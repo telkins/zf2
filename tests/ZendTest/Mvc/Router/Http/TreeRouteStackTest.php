@@ -3,7 +3,7 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
@@ -229,6 +229,38 @@ class TreeRouteStackTest extends TestCase
         $this->assertEquals('/?foo=bar', $stack->assemble(array(), array('name' => 'index', 'query' => array('foo' => 'bar'))));
     }
 
+    public function testAssembleWithEncodedPath()
+    {
+        $stack = new TreeRouteStack();
+        $stack->addRoute(
+            'index',
+            array(
+                'type' => 'Literal',
+                'options' => array(
+                    'route' => '/this%2Fthat',
+                ),
+            )
+        );
+
+        $this->assertEquals('/this%2Fthat', $stack->assemble(array(), array('name' => 'index')));
+    }
+
+    public function testAssembleWithEncodedPathAndQueryParams()
+    {
+        $stack = new TreeRouteStack();
+        $stack->addRoute(
+            'index',
+            array(
+                'type' => 'Literal',
+                'options' => array(
+                    'route' => '/this%2Fthat',
+                ),
+            )
+        );
+
+        $this->assertEquals('/this%2Fthat?foo=bar', $stack->assemble(array(), array('name' => 'index', 'query' => array('foo' => 'bar'), 'normalize_path' => false)));
+    }
+
     public function testAssembleWithScheme()
     {
         $uri   = new HttpUri();
@@ -425,6 +457,37 @@ class TreeRouteStackTest extends TestCase
             )
         );
         $this->assertEquals('/foo/bar', $stack->assemble(array(), array('name' => 'foo')));
+    }
+
+    public function testChainRouteAssemblingWithChildrenAndSecureScheme()
+    {
+        $stack = new TreeRouteStack();
+
+        $uri = new \Zend\Uri\Http();
+        $uri->setHost('localhost');
+
+        $stack->setRequestUri($uri);
+        $stack->addRoute(
+            'foo',
+            array(
+                'type' => 'literal',
+                'options' => array(
+                    'route' => '/foo'
+                ),
+                'chain_routes' => array(
+                    array('type' => 'scheme', 'options' => array('scheme' => 'https'))
+                ),
+                'child_routes' => array(
+                    'baz' => array(
+                        'type' => 'literal',
+                        'options' => array(
+                            'route' => '/baz'
+                        ),
+                    )
+                )
+            )
+        );
+        $this->assertEquals('https://localhost/foo/baz', $stack->assemble(array(), array('name' => 'foo/baz')));
     }
 
     public function testFactory()

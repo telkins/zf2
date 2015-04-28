@@ -3,11 +3,11 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
-namespace ZendTest\Session;
+namespace ZendTest\Session\Config;
 
 use Zend\Session\Config\SessionConfig;
 
@@ -348,14 +348,14 @@ class SessionConfigTest extends \PHPUnit_Framework_TestCase
 
     public function testCookieSecureIsMutable()
     {
-        $value = ini_get('session.cookie_secure') ? false : true;
+        $value = !ini_get('session.cookie_secure');
         $this->config->setCookieSecure($value);
         $this->assertEquals($value, $this->config->getCookieSecure());
     }
 
     public function testCookieSecureAltersIniSetting()
     {
-        $value = ini_get('session.cookie_secure') ? false : true;
+        $value = !ini_get('session.cookie_secure');
         $this->config->setCookieSecure($value);
         $this->assertEquals($value, ini_get('session.cookie_secure'));
     }
@@ -369,14 +369,14 @@ class SessionConfigTest extends \PHPUnit_Framework_TestCase
 
     public function testCookieHttpOnlyIsMutable()
     {
-        $value = ini_get('session.cookie_httponly') ? false : true;
+        $value = !ini_get('session.cookie_httponly');
         $this->config->setCookieHttpOnly($value);
         $this->assertEquals($value, $this->config->getCookieHttpOnly());
     }
 
     public function testCookieHttpOnlyAltersIniSetting()
     {
-        $value = ini_get('session.cookie_httponly') ? false : true;
+        $value = !ini_get('session.cookie_httponly');
         $this->config->setCookieHttpOnly($value);
         $this->assertEquals($value, ini_get('session.cookie_httponly'));
     }
@@ -390,14 +390,14 @@ class SessionConfigTest extends \PHPUnit_Framework_TestCase
 
     public function testUseCookiesIsMutable()
     {
-        $value = ini_get('session.use_cookies') ? false : true;
+        $value = !ini_get('session.use_cookies');
         $this->config->setUseCookies($value);
         $this->assertEquals($value, (bool) $this->config->getUseCookies());
     }
 
     public function testUseCookiesAltersIniSetting()
     {
-        $value = ini_get('session.use_cookies') ? false : true;
+        $value = !ini_get('session.use_cookies');
         $this->config->setUseCookies($value);
         $this->assertEquals($value, (bool) ini_get('session.use_cookies'));
     }
@@ -411,14 +411,14 @@ class SessionConfigTest extends \PHPUnit_Framework_TestCase
 
     public function testUseOnlyCookiesIsMutable()
     {
-        $value = ini_get('session.use_only_cookies') ? false : true;
+        $value = !ini_get('session.use_only_cookies');
         $this->config->setOption('use_only_cookies', $value);
         $this->assertEquals($value, (bool) $this->config->getOption('use_only_cookies'));
     }
 
     public function testUseOnlyCookiesAltersIniSetting()
     {
-        $value = ini_get('session.use_only_cookies') ? false : true;
+        $value = !ini_get('session.use_only_cookies');
         $this->config->setOption('use_only_cookies', $value);
         $this->assertEquals($value, (bool) ini_get('session.use_only_cookies'));
     }
@@ -517,6 +517,7 @@ class SessionConfigTest extends \PHPUnit_Framework_TestCase
     public function cacheLimiters()
     {
         return array(
+            array(''),
             array('nocache'),
             array('public'),
             array('private'),
@@ -593,14 +594,14 @@ class SessionConfigTest extends \PHPUnit_Framework_TestCase
 
     public function testUseTransSidIsMutable()
     {
-        $value = ini_get('session.use_trans_sid') ? false : true;
+        $value = !ini_get('session.use_trans_sid');
         $this->config->setOption('use_trans_sid', $value);
         $this->assertEquals($value, (bool) $this->config->getOption('use_trans_sid'));
     }
 
     public function testUseTransSidAltersIniSetting()
     {
-        $value = ini_get('session.use_trans_sid') ? false : true;
+        $value = !ini_get('session.use_trans_sid');
         $this->config->setOption('use_trans_sid', $value);
         $this->assertEquals($value, (bool) ini_get('session.use_trans_sid'));
     }

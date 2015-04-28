@@ -3,7 +3,7 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
@@ -39,5 +39,34 @@ class GlobTest extends TestCase
         // run into a max path lengh error
         $path = '/' . str_repeat('a', 10000);
         Glob::glob($path);
+    }
+
+    /**
+     * @param string $pattern
+     *
+     * @dataProvider patternsProvider
+     */
+    public function testPatterns($pattern, $expectedSequence)
+    {
+        $result = Glob::glob(__DIR__ . '/_files/' . $pattern, Glob::GLOB_BRACE);
+
+        $this->assertCount(count($expectedSequence), $result);
+
+        foreach ($expectedSequence as $i => $expectedFileName) {
+            $this->assertStringEndsWith($expectedFileName, $result[$i]);
+        }
+    }
+
+    public function patternsProvider()
+    {
+        return array(
+            array(
+                "{{,*.}alph,{,*.}bet}a",
+                array(
+                    'alpha', 'eta.alpha', 'zeta.alpha', 'beta', 'eta.beta',
+                    'zeta.beta'
+                )
+            )
+        );
     }
 }

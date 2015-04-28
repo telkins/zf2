@@ -3,7 +3,7 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
@@ -19,14 +19,34 @@ use Zend\Mvc\Controller\PluginManager;
 use Zend\Mvc\Controller\Plugin\Forward as ForwardPlugin;
 use Zend\Mvc\MvcEvent;
 use Zend\Mvc\Router\RouteMatch;
+use Zend\Stdlib\CallbackHandler;
 use ZendTest\Mvc\Controller\TestAsset\ForwardController;
 use ZendTest\Mvc\Controller\TestAsset\SampleController;
 use ZendTest\Mvc\Controller\TestAsset\UneventfulController;
-use ZendTest\Mvc\Controller\TestAsset\UnlocatableEventfulController;
 use ZendTest\Mvc\TestAsset\Locator;
 
 class ForwardTest extends TestCase
 {
+    /**
+     * @var PluginManager
+     */
+    private $plugins;
+
+    /**
+     * @var ControllerManager
+     */
+    private $controllers;
+
+    /**
+     * @var SampleController
+     */
+    private $controller;
+
+    /**
+     * @var \Zend\Mvc\Controller\Plugin\Forward
+     */
+    private $plugin;
+
     public function setUp()
     {
         StaticEventManager::resetInstance();
@@ -58,9 +78,11 @@ class ForwardTest extends TestCase
             return $controller;
         });
         $controllers->setServiceLocator($services);
-        $services->add('ControllerLoader', function () use ($controllers) {
+        $controllerLoader = function () use ($controllers) {
             return $controllers;
-        });
+        };
+        $services->add('ControllerLoader', $controllerLoader);
+        $services->add('ControllerManager', $controllerLoader);
         $services->add('ControllerPluginManager', function () use ($plugins) {
             return $plugins;
         });
@@ -128,6 +150,29 @@ class ForwardTest extends TestCase
         $this->assertEquals(array('content' => 'ZendTest\Mvc\Controller\TestAsset\ForwardController::testAction'), $result);
     }
 
+    /**
+     * @group 5432
+     */
+    public function testNonArrayListenerDoesNotRaiseErrorWhenPluginDispatchsRequestedController()
+    {
+        $services = $this->plugins->getServiceLocator();
+        $events   = $services->get('EventManager');
+        $sharedEvents = $this->getMock('Zend\EventManager\SharedEventManagerInterface');
+        $sharedEvents->expects($this->any())->method('getListeners')->will($this->returnValue(array(
+            new CallbackHandler(function ($e) {})
+        )));
+        $events = $this->getMock('Zend\EventManager\EventManagerInterface');
+        $events->expects($this->any())->method('getSharedManager')->will($this->returnValue($sharedEvents));
+        $application = $this->getMock('Zend\Mvc\ApplicationInterface');
+        $application->expects($this->any())->method('getEventManager')->will($this->returnValue($events));
+        $event = $this->controller->getEvent();
+        $event->setApplication($application);
+
+        $result = $this->plugin->dispatch('forward');
+        $this->assertInternalType('array', $result);
+        $this->assertEquals(array('content' => 'ZendTest\Mvc\Controller\TestAsset\ForwardController::testAction'), $result);
+    }
+
     public function testDispatchWillSeedRouteMatchWithPassedParameters()
     {
         $result = $this->plugin->dispatch('forward', array(
@@ -167,5 +212,13 @@ class ForwardTest extends TestCase
         $this->assertEquals('not-found', $result['status']);
         $this->assertTrue(isset($result['params']));
         $this->assertEquals(array(), $result['params']);
+    }
+
+    /**
+     * @group 6398
+     */
+    public function testSetListenersToDetachIsFluent()
+    {
+        $this->assertSame($this->plugin, $this->plugin->setListenersToDetach(array()));
     }
 }

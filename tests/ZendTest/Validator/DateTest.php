@@ -3,13 +3,14 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
 namespace ZendTest\Validator;
 
 use DateTime;
+use DateTimeImmutable;
 use stdClass;
 use Zend\Validator;
 
@@ -31,6 +32,12 @@ class DateTest extends \PHPUnit_Framework_TestCase
     public function setUp()
     {
         $this->validator = new Validator\Date();
+    }
+
+    public function testSetFormatIgnoresNull()
+    {
+        $this->validator->setFormat(null);
+        $this->assertEquals(Validator\Date::FORMAT_DEFAULT, $this->validator->getFormat());
     }
 
     public function datesDataProvider()
@@ -64,11 +71,15 @@ class DateTest extends \PHPUnit_Framework_TestCase
             // int
             array(0,                         null,              true),
             array(1340677235,                null,              true),
-            // Commenting out, as value appears to vary based on OS
-            // array(999999999999,              null,              true),
+            // 32bit version of php will convert this to double
+            array(999999999999,              null,              true),
+            // double
+            array(12.12,                     null,              false),
             // array
             array(array('2012', '06', '25'), null,              true),
-            array(array('12', '06', '25'),   null,              false),
+            // 0012-06-25 is a valid date, if you want 2012, use 'y' instead of 'Y'
+            array(array('12', '06', '25'),   null,              true),
+            array(array('2012', '06', '33'), null,              false),
             array(array(1 => 1),             null,              false),
             // DateTime
             array(new DateTime(),            null,              true),
@@ -86,7 +97,15 @@ class DateTest extends \PHPUnit_Framework_TestCase
     {
         $this->validator->setFormat($format);
         $this->assertEquals($result, $this->validator->isValid($input));
-        $this->assertEquals($format, $this->validator->getFormat());
+    }
+
+    public function testDateTimeImmutable()
+    {
+        if (PHP_VERSION_ID < 50500) {
+            $this->markTestSkipped('`DateTimeImmutable` is only supported in PHP >=5.5.0');
+        }
+
+        $this->assertTrue($this->validator->isValid(new DateTimeImmutable()));
     }
 
     /**

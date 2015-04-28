@@ -3,7 +3,7 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
@@ -279,6 +279,22 @@ class FormButtonTest extends CommonTestCase
         $this->assertContains('>translated content<', $markup);
     }
 
+    public function testCanTranslateButtonContentParameter()
+    {
+        $element = new Element('foo');
+
+        $mockTranslator = $this->getMock('Zend\I18n\Translator\Translator');
+        $mockTranslator->expects($this->exactly(1))
+            ->method('translate')
+            ->will($this->returnValue('translated content'));
+
+        $this->helper->setTranslator($mockTranslator);
+        $this->assertTrue($this->helper->hasTranslator());
+
+        $markup = $this->helper->__invoke($element, "translate me");
+        $this->assertContains('>translated content<', $markup);
+    }
+
     public function testTranslatorMethods()
     {
         $translatorMock = $this->getMock('Zend\I18n\Translator\Translator');
@@ -291,5 +307,22 @@ class FormButtonTest extends CommonTestCase
 
         $this->helper->setTranslatorEnabled(false);
         $this->assertFalse($this->helper->isTranslatorEnabled());
+    }
+
+    public function testLabelIsEscapedByDefault()
+    {
+        $element = new Element('foo');
+        $element->setLabel('<strong>Click me</strong>');
+        $markup = $this->helper->__invoke($element);
+        $this->assertRegexp('#<button([^>]*)>&lt;strong&gt;Click me&lt;/strong&gt;<\/button>#', $markup);
+    }
+
+    public function testCanDisableLabelHtmlEscape()
+    {
+        $element = new Element('foo');
+        $element->setLabel('<strong>Click me</strong>');
+        $element->setLabelOptions(array('disable_html_escape' => true));
+        $markup = $this->helper->__invoke($element);
+        $this->assertRegexp('#<button([^>]*)><strong>Click me</strong></button>#', $markup);
     }
 }

@@ -3,7 +3,7 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
@@ -16,7 +16,6 @@ use Zend\Cache;
  */
 class StorageFactoryTest extends \PHPUnit_Framework_TestCase
 {
-
     public function setUp()
     {
         Cache\StorageFactory::resetAdapterPluginManager();
@@ -131,6 +130,16 @@ class StorageFactoryTest extends \PHPUnit_Framework_TestCase
         }
     }
 
+    public function testFactoryInstantiateAdapterWithPluginsWithoutEventsCapableInterfaceThrowsException()
+    {
+        // The BlackHole adapter doesn't implement EventsCapableInterface
+        $this->setExpectedException('Zend\Cache\Exception\RuntimeException');
+        Cache\StorageFactory::factory(array(
+            'adapter' => 'blackhole',
+            'plugins' => array('Serializer'),
+        ));
+    }
+
     public function testFactoryWithPluginsAndOptionsArray()
     {
         $factory = array(
@@ -172,7 +181,6 @@ class StorageFactoryTest extends \PHPUnit_Framework_TestCase
 
         // test plugin structure
         foreach ($storage->getPluginRegistry() as $plugin) {
-
             // test plugin options
             $pluginClass = get_class($plugin);
             switch ($pluginClass) {
@@ -193,7 +201,6 @@ class StorageFactoryTest extends \PHPUnit_Framework_TestCase
                 default:
                     $this->fail("Unexpected plugin class '{$pluginClass}'");
             }
-
         }
     }
 }

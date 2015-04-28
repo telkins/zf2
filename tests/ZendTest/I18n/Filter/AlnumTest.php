@@ -3,11 +3,11 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
-namespace ZendTest\Filter;
+namespace ZendTest\I18n\Filter;
 
 use Zend\I18n\Filter\Alnum as AlnumFilter;
 use Locale;
@@ -52,12 +52,16 @@ class AlnumTest extends \PHPUnit_Framework_TestCase
      */
     public function setUp()
     {
+        if (!extension_loaded('intl')) {
+            $this->markTestSkipped('ext/intl not enabled');
+        }
+
         $this->filter = new AlnumFilter();
 
         $this->locale               = Locale::getDefault();
         $language                   = Locale::getPrimaryLanguage($this->locale);
         static::$meansEnglishAlphabet = in_array($language, array('ja'));
-        static::$unicodeEnabled       = (@preg_match('/\pL/u', 'a')) ? true : false;
+        static::$unicodeEnabled       = (bool) @preg_match('/\pL/u', 'a');
     }
 
     /**
@@ -153,5 +157,41 @@ class AlnumTest extends \PHPUnit_Framework_TestCase
             $actual = $this->filter->filter($input);
             $this->assertEquals($expected, $actual);
         }
+    }
+
+    public function testFilterSupportArray()
+    {
+        $filter = new AlnumFilter();
+
+        $values = array(
+            'abc123'  => 'abc123',
+            'abc 123' => 'abc123',
+            'abcxyz'  => 'abcxyz',
+            'AZ@#4.3' => 'AZ43',
+            ''        => ''
+        );
+
+        $actual = $filter->filter(array_keys($values));
+
+        $this->assertEquals(array_values($values), $actual);
+    }
+
+    public function returnUnfilteredDataProvider()
+    {
+        return array(
+            array(null),
+            array(new \stdClass())
+        );
+    }
+
+    /**
+     * @dataProvider returnUnfilteredDataProvider
+     * @return void
+     */
+    public function testReturnUnfiltered($input)
+    {
+        $filter = new AlnumFilter();
+
+        $this->assertEquals($input,  $filter->filter($input));
     }
 }

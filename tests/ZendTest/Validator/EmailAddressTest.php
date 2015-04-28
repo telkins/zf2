@@ -3,7 +3,7 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
@@ -272,7 +272,7 @@ class EmailAddressTest extends \PHPUnit_Framework_TestCase
         }
     }
 
-   /**
+    /**
      * Ensures that the validator follows expected behavior for valid email addresses with complex local parts
      *
      * @return void
@@ -300,9 +300,7 @@ class EmailAddressTest extends \PHPUnit_Framework_TestCase
      */
     public function testMXRecords()
     {
-        if (!constant('TESTS_ZEND_VALIDATOR_ONLINE_ENABLED')) {
-            $this->markTestSkipped('Testing MX records has been disabled');
-        }
+        $this->skipIfOnlineTestsDisabled();
 
         $validator = new EmailAddress(Hostname::ALLOW_DNS, true);
 
@@ -342,9 +340,7 @@ class EmailAddressTest extends \PHPUnit_Framework_TestCase
      */
     public function testNoMxRecordARecordFallback()
     {
-        if (!constant('TESTS_ZEND_VALIDATOR_ONLINE_ENABLED')) {
-            $this->markTestSkipped('Testing MX records has been disabled');
-        }
+        $this->skipIfOnlineTestsDisabled();
 
         $validator = new EmailAddress(Hostname::ALLOW_DNS, true);
 
@@ -413,10 +409,14 @@ class EmailAddressTest extends \PHPUnit_Framework_TestCase
      */
     public function testHostnameValidatorMessagesShouldBeTranslated()
     {
+        if (!extension_loaded('intl')) {
+            $this->markTestSkipped('ext/intl not enabled');
+        }
+
         $hostnameValidator = new Hostname();
         $translations = array(
             'hostnameIpAddressNotAllowed'   => 'hostnameIpAddressNotAllowed translation',
-            'hostnameUnknownTld'            => 'hostnameUnknownTld translation',
+            'hostnameUnknownTld'            => 'The input appears to be a DNS hostname but cannot match TLD against known list',
             'hostnameDashCharacter'         => 'hostnameDashCharacter translation',
             'hostnameInvalidHostnameSchema' => 'hostnameInvalidHostnameSchema translation',
             'hostnameUndecipherableTld'     => 'hostnameUndecipherableTld translation',
@@ -641,10 +641,9 @@ class EmailAddressTest extends \PHPUnit_Framework_TestCase
      */
     public function testGetMXRecord()
     {
-        if (!constant('TESTS_ZEND_VALIDATOR_ONLINE_ENABLED')) {
-            $this->markTestSkipped('Testing MX records has been disabled');
-        }
+        $this->skipIfOnlineTestsDisabled();
 
+        $validator = new EmailAddress(array('useMxCheck' => true, 'allow' => Hostname::ALLOW_ALL));
         $validator = new EmailAddress(array('useMxCheck' => true, 'allow' => Hostname::ALLOW_ALL));
 
         if (!$validator->isMxSupported()) {
@@ -675,9 +674,8 @@ class EmailAddressTest extends \PHPUnit_Framework_TestCase
      */
     public function testUseMxCheckBasicValid()
     {
-        if (!constant('TESTS_ZEND_VALIDATOR_ONLINE_ENABLED')) {
-            $this->markTestSkipped('Testing MX records has been disabled');
-        }
+        $this->skipIfOnlineTestsDisabled();
+
         $validator = new EmailAddress(array(
             'useMxCheck'        => true,
             'useDeepMxCheck'    => true
@@ -695,6 +693,11 @@ class EmailAddressTest extends \PHPUnit_Framework_TestCase
             'bob@teaparty.uk.com',
             'bob@thelongestdomainnameintheworldandthensomeandthensomemoreandmore.com'
         );
+
+        if (extension_loaded('intl')) {
+            $emailAddresses[] = 'иван@письмо.рф';
+            $emailAddresses[] = 'xn--@-7sbfxdyelgv5j.xn--p1ai';
+        }
 
         foreach ($emailAddresses as $input) {
             $this->assertTrue($validator->isValid($input), "$input failed to pass validation:\n"
@@ -730,6 +733,12 @@ class EmailAddressTest extends \PHPUnit_Framework_TestCase
             'bob @ domain.com',
             'Abc..123@example.com'
             );
+
+        if (!extension_loaded('intl')) {
+            $emailAddresses[] = 'иван@письмо.рф';
+            $emailAddresses[] = 'xn--@-7sbfxdyelgv5j.xn--p1ai';
+        }
+
         foreach ($emailAddresses as $input) {
             $this->assertFalse($validator->isValid($input), implode("\n", $this->validator->getMessages()) . $input);
         }
@@ -802,5 +811,17 @@ class EmailAddressTest extends \PHPUnit_Framework_TestCase
         // 223.255.255.0/24
         $this->assertFalse($validator->isReserved('223.255.255.0'));
         $this->assertFalse($validator->isReserved('223.255.255.255'));
+    }
+
+    /**
+     * @throws \PHPUnit_Framework_SkippedTestError
+     *
+     * @return void
+     */
+    private function skipIfOnlineTestsDisabled()
+    {
+        if (! (defined('TESTS_ZEND_VALIDATOR_ONLINE_ENABLED') && \TESTS_ZEND_VALIDATOR_ONLINE_ENABLED)) {
+            $this->markTestSkipped('Testing MX records has been disabled');
+        }
     }
 }

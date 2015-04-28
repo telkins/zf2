@@ -3,7 +3,7 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
@@ -49,6 +49,35 @@ class ChainTest extends TestCase
         );
     }
 
+    public static function getRouteWithOptionalParam()
+    {
+        $routePlugins = new RoutePluginManager();
+
+        return new Chain(
+            array(
+                array(
+                    'type'    => 'Zend\Mvc\Router\Http\Segment',
+                    'options' => array(
+                        'route'    => '/:controller',
+                        'defaults' => array(
+                            'controller' => 'foo',
+                        ),
+                    ),
+                ),
+                array(
+                    'type'    => 'Zend\Mvc\Router\Http\Segment',
+                    'options' => array(
+                        'route'    => '[/:bar]',
+                        'defaults' => array(
+                            'bar' => 'bar',
+                        ),
+                    ),
+                ),
+            ),
+            $routePlugins
+        );
+    }
+
     public static function routeProvider()
     {
         return array(
@@ -77,6 +106,24 @@ class ChainTest extends TestCase
                 array(
                     'controller' => 'foo',
                     'bar' => 'baz',
+                ),
+            ),
+            'optional-parameter' => array(
+                self::getRouteWithOptionalParam(),
+                '/foo/baz',
+                null,
+                array(
+                    'controller' => 'foo',
+                    'bar' => 'baz',
+                ),
+            ),
+            'optional-parameter-empty' => array(
+                self::getRouteWithOptionalParam(),
+                '/foo',
+                null,
+                array(
+                    'controller' => 'foo',
+                    'bar' => 'bar',
                 ),
             ),
         );

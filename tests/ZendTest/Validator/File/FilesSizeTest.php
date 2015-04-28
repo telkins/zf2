@@ -3,7 +3,7 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
@@ -182,5 +182,72 @@ class FilesSizeTest extends \PHPUnit_Framework_TestCase
         if (strstr($errstr, 'deprecated')) {
             $this->multipleOptionsDetected = true;
         }
+    }
+
+    public function testEmptyFileShouldReturnFalseAndDisplayNotFoundMessage()
+    {
+        $validator = new File\FilesSize(0);
+
+        $this->assertFalse($validator->isValid(''));
+        $this->assertArrayHasKey(File\FilesSize::NOT_READABLE, $validator->getMessages());
+
+        $filesArray = array(
+            'name'      => '',
+            'size'      => 0,
+            'tmp_name'  => '',
+            'error'     => UPLOAD_ERR_NO_FILE,
+            'type'      => '',
+        );
+
+        $this->assertFalse($validator->isValid($filesArray));
+        $this->assertArrayHasKey(File\FilesSize::NOT_READABLE, $validator->getMessages());
+    }
+
+    public function testFilesFormat()
+    {
+        $validator = new File\FilesSize(array('min' => 0, 'max' => 2000));
+
+        $this->assertTrue(
+            $validator->isValid($this->createFileInfo(__DIR__ . '/_files/testsize.mo'))
+        );
+        $this->assertTrue(
+            $validator->isValid($this->createFileInfo(__DIR__ . '/_files/testsize2.mo'))
+        );
+        $this->assertFalse(
+            $validator->isValid($this->createFileInfo(__DIR__ . '/_files/testsize3.mo'))
+        );
+
+        $validator = new File\FilesSize(array('min' => 0, 'max' => 500000));
+
+        $this->assertTrue($validator->isValid(array(
+            $this->createFileInfo(__DIR__ . '/_files/testsize.mo'),
+            $this->createFileInfo(__DIR__ . '/_files/testsize.mo'),
+            $this->createFileInfo(__DIR__ . '/_files/testsize2.mo'),
+        )));
+    }
+
+    /**
+     * @expectedException InvalidArgumentException
+     */
+    public function testIllegalFilesFormat()
+    {
+        $validator = new File\FilesSize(array('min' => 0, 'max' => 2000));
+
+        $validator->isValid(array(
+            array(
+                'error' => 0
+            ),
+        ));
+    }
+
+    private function createFileInfo($file)
+    {
+        return array(
+            'tmp_name' => $file,
+            'name'     => basename($file),
+            'error'    => 0,
+            'type'     => '',
+            'size'     => filesize($file),
+        );
     }
 }

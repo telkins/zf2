@@ -3,13 +3,14 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
 namespace ZendTest\Crypt\Password;
 
 use Zend\Crypt\Password\Apache;
+use Zend\Crypt\Password\Bcrypt;
 use Zend\Crypt\Password\Exception;
 
 /**
@@ -172,7 +173,14 @@ class ApacheTest extends \PHPUnit_Framework_TestCase
      */
     public function testApr1Md5WrongSaltFormat()
     {
-        $this->apache->verify('myPassword','$apr1$z0Hhe5Lq3$6YdJKbkrJg77Dvw2gpuSA1');
-        $this->apache->verify('myPassword','$apr1$z0Hhe5L&$6YdJKbkrJg77Dvw2gpuSA1');
+        $this->apache->verify('myPassword', '$apr1$z0Hhe5Lq3$6YdJKbkrJg77Dvw2gpuSA1');
+        $this->apache->verify('myPassword', '$apr1$z0Hhe5L&$6YdJKbkrJg77Dvw2gpuSA1');
+    }
+
+    public function testCanVerifyBcryptHashes()
+    {
+        $bcrypt = new Bcrypt();
+        $hash = $bcrypt->create('myPassword');
+        $this->assertTrue($this->apache->verify('myPassword', $hash));
     }
 }

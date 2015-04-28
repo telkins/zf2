@@ -3,7 +3,7 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
@@ -17,7 +17,6 @@ use Zend\ServiceManager\ServiceManager;
  */
 class DiAbstractServiceFactoryTest extends \PHPUnit_Framework_TestCase
 {
-
     /**
      * @var DiAbstractServiceFactory
      */
@@ -53,6 +52,18 @@ class DiAbstractServiceFactoryTest extends \PHPUnit_Framework_TestCase
             $this->getMock('Zend\Di\Di')
         );
         $this->assertInstanceOf('Zend\ServiceManager\Di\DiAbstractServiceFactory', $instance);
+    }
+
+    /**
+     * @group 6021
+     *
+     * @covers Zend\ServiceManager\Di\DiAbstractServiceFactory::createServiceWithName
+     * @covers Zend\ServiceManager\Di\DiAbstractServiceFactory::get
+     */
+    public function testCreateServiceWithNameAndWithoutRequestName()
+    {
+        $foo = $this->diAbstractServiceFactory->createServiceWithName($this->mockServiceLocator, 'foo', null);
+        $this->assertEquals($this->fooInstance, $foo);
     }
 
     /**
@@ -104,6 +115,10 @@ class DiAbstractServiceFactoryTest extends \PHPUnit_Framework_TestCase
             ->method('hasClass')
             ->with($this->equalTo(__NAMESPACE__ . '\Other\Non\Existing'))
             ->will($this->returnValue(true));
+        $classDefinition
+            ->expects($this->any())
+            ->method('getClasses')
+            ->will($this->returnValue(array(__NAMESPACE__ . '\Other\Non\Existing')));
         $def->addDefinition($classDefinition);
         $this->assertTrue($instance->canCreateServiceWithName($locator, __NAMESPACE__ . '\Other\Non\Existing', __NAMESPACE__ . '\Other\Non\Existing'));
     }

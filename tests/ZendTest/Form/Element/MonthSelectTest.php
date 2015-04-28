@@ -3,7 +3,7 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
@@ -12,7 +12,6 @@ namespace ZendTest\Form\Element;
 use DateTime;
 use PHPUnit_Framework_TestCase as TestCase;
 use Zend\Form\Element\MonthSelect as MonthSelectElement;
-use Zend\Form\Factory;
 
 class MonthSelectTest extends TestCase
 {
@@ -79,5 +78,12 @@ class MonthSelectTest extends TestCase
 
         $this->assertEquals('2012', $element->getYearElement()->getValue());
         $this->assertEquals('09', $element->getMonthElement()->getValue());
+    }
+
+    public function testCanGetValue()
+    {
+        $element  = new MonthSelectElement();
+        $element->setValue(new DateTime('2012-09'));
+        $this->assertEquals('2012-09', $element->getValue());
     }
 }

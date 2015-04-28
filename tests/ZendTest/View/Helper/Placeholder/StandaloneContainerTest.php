@@ -3,7 +3,7 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
@@ -13,14 +13,13 @@ use Zend\View\Helper\Placeholder\Container;
 use Zend\View\Renderer\PhpRenderer as View;
 
 /**
- * Test class for Zend_View_Helper_Placeholder_StandaloneContainer.
+ * Test class for Zend\View\Helper\Placeholder\Container.
  *
  * @group      Zend_View
  * @group      Zend_View_Helper
  */
 class StandaloneContainerTest extends \PHPUnit_Framework_TestCase
 {
-
     /**
      * @var Foo
      */
@@ -136,8 +135,11 @@ class StandaloneContainerTest extends \PHPUnit_Framework_TestCase
 class Foo extends \Zend\View\Helper\Placeholder\Container\AbstractStandalone
 {
     protected $_regKey = 'foo';
-    public function direct() {}
+    public function direct()
+    {
+    }
 }
 
 class Bar extends \Zend\View\Helper\Placeholder\Container\AbstractContainer
-{}
+{
+}

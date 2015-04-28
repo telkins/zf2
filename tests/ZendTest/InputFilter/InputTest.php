@@ -3,7 +3,7 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
@@ -227,6 +227,87 @@ class InputTest extends TestCase
         $this->assertEquals($notEmptyMock, $validators[0]['instance']);
     }
 
+    public function emptyValuesProvider()
+    {
+        return array(
+            array(null),
+            array(''),
+            array(array()),
+        );
+    }
+
+    /**
+     * @dataProvider emptyValuesProvider
+     */
+    public function testValidatorSkippedIfValueIsEmptyAndAllowedAndNotContinue($emptyValue)
+    {
+        $this->input->setAllowEmpty(true)
+                    ->setContinueIfEmpty(false)
+                    ->setValue($emptyValue)
+                    ->getValidatorChain()->attach(new Validator\Callback(function () {
+                        return false;
+                    }));
+        $this->assertTrue($this->input->isValid());
+    }
+
+    /**
+     * @dataProvider emptyValuesProvider
+     */
+    public function testAllowEmptyOptionSet($emptyValue)
+    {
+        $this->input->setAllowEmpty(true);
+        $this->input->setValue($emptyValue);
+        $this->assertTrue($this->input->isValid());
+    }
+
+    /**
+     * @dataProvider emptyValuesProvider
+     */
+    public function testAllowEmptyOptionNotSet($emptyValue)
+    {
+        $this->input->setAllowEmpty(false);
+        $this->input->setValue($emptyValue);
+        $this->assertFalse($this->input->isValid());
+    }
+
+    /**
+     * @dataProvider emptyValuesProvider
+     */
+    public function testValidatorInvokedIfValueIsEmptyAndAllowedAndContinue($emptyValue)
+    {
+        $message = 'failure by explicit validator';
+        $validator = new Validator\Callback(function ($value) {
+            return false;
+        });
+        $validator->setMessage($message);
+        $this->input->setAllowEmpty(true)
+                    ->setContinueIfEmpty(true)
+                    ->setValue($emptyValue)
+                    ->getValidatorChain()->attach($validator);
+        $this->assertFalse($this->input->isValid());
+        // Test reason for validation failure; ensures that failure was not
+        // caused by accidentally injected NotEmpty validator
+        $this->assertEquals(array('callbackValue' => $message), $this->input->getMessages());
+    }
+
+    public function testNotAllowEmptyWithFilterConvertsNonemptyToEmptyIsNotValid()
+    {
+        $this->input->setValue('nonempty')
+                    ->getFilterChain()->attach(new Filter\Callback(function () {
+                        return '';
+                    }));
+        $this->assertFalse($this->input->isValid());
+    }
+
+    public function testNotAllowEmptyWithFilterConvertsEmptyToNonEmptyIsValid()
+    {
+        $this->input->setValue('')
+                    ->getFilterChain()->attach(new Filter\Callback(function () {
+                        return 'nonempty';
+                    }));
+        $this->assertTrue($this->input->isValid());
+    }
+
     public function testMerge()
     {
         $input = new Input('foo');
@@ -272,6 +353,36 @@ class InputTest extends TestCase
         $this->assertEquals($notEmptyMock, $validators[1]['instance']);
     }
 
+    public function dataFallbackValue()
+    {
+        return array(
+            array(
+                'fallbackValue' => null
+            ),
+            array(
+                'fallbackValue' => ''
+            ),
+            array(
+                'fallbackValue' => 'some value'
+            ),
+        );
+    }
+
+    /**
+     * @dataProvider dataFallbackValue
+     */
+    public function testFallbackValue($fallbackValue)
+    {
+        $this->input->setFallbackValue($fallbackValue);
+        $validator = new Validator\Date();
+        $this->input->getValidatorChain()->attach($validator);
+        $this->input->setValue('123'); // not a date
+
+        $this->assertTrue($this->input->isValid());
+        $this->assertEmpty($this->input->getMessages());
+        $this->assertSame($fallbackValue, $this->input->getValue());
+    }
+
     public function testMergeRetainsContinueIfEmptyFlag()
     {
         $input = new Input('foo');
@@ -280,5 +391,20 @@ class InputTest extends TestCase
         $input2 = new Input('bar');
         $input2->merge($input);
         $this->assertTrue($input2->continueIfEmpty());
+    }
+
+    public function testMergeRetainsAllowEmptyFlag()
+    {
+        $input = new Input('foo');
+        $input->setRequired(true);
+        $input->setAllowEmpty(true);
+
+        $input2 = new Input('bar');
+        $input2->setRequired(true);
+        $input2->setAllowEmpty(false);
+        $input2->merge($input);
+
+        $this->assertTrue($input2->isRequired());
+        $this->assertTrue($input2->allowEmpty());
     }
 }

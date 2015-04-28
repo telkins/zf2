@@ -3,13 +3,12 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
 namespace ZendTest\Http;
 
-use ReflectionClass;
 use Zend\Uri\Http;
 use Zend\Http\Client;
 use Zend\Http\Cookies;
@@ -19,14 +18,14 @@ use Zend\Http\Header\SetCookie;
 use Zend\Http\Request;
 use Zend\Http\Response;
 use Zend\Http\Client\Adapter\Test;
-
+use ZendTest\Http\TestAsset\ExtendedClient;
 
 class ClientTest extends \PHPUnit_Framework_TestCase
 {
     public function testIfCookiesAreSticky()
     {
         $initialCookies = array(
-            new SetCookie('foo', 'far', null, '/', 'www.domain.com' ),
+            new SetCookie('foo', 'far', null, '/', 'www.domain.com'),
             new SetCookie('bar', 'biz', null, '/', 'www.domain.com')
         );
 
@@ -44,7 +43,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
 
         $cookies->addCookiesFromResponse($client->getResponse(), $client->getUri());
 
-        $client->addCookie( $cookies->getMatchingCookies($client->getUri()) );
+        $client->addCookie($cookies->getMatchingCookies($client->getUri()));
 
         $this->assertEquals(4, count($client->getCookies()));
     }
@@ -350,50 +349,6 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         $this->assertSame($testAdapter, $client->getAdapter());
     }
 
-    /**
-     * Custom response object is set but still invalid code coming back
-     * @expectedException Zend\Http\Exception\InvalidArgumentException
-     */
-    public function testUsageOfCustomResponseInvalidCode()
-    {
-        require_once(dirname(realpath(__FILE__)) . DIRECTORY_SEPARATOR .'_files' . DIRECTORY_SEPARATOR . 'CustomResponse.php');
-        $testAdapter = new Test();
-        $testAdapter->setResponse(
-            "HTTP/1.1 496 CustomResponse\r\n\r\n"
-            . "Whatever content"
-        );
-
-        $client = new Client('http://www.example.org/', array(
-            'adapter' => $testAdapter,
-        ));
-        $client->setResponse(new CustomResponse());
-        $response = $client->send();
-    }
-
-    /**
-     * Custom response object is set with defined status code 497.
-     * Should not throw an exception.
-     */
-    public function testUsageOfCustomResponseCustomCode()
-    {
-        require_once(dirname(realpath(__FILE__)) . DIRECTORY_SEPARATOR .'_files' . DIRECTORY_SEPARATOR . 'CustomResponse.php');
-        $testAdapter = new Test();
-        $testAdapter->setResponse(
-            "HTTP/1.1 497 CustomResponse\r\n\r\n"
-            . "Whatever content"
-        );
-
-        $client = new Client('http://www.example.org/', array(
-            'adapter' => $testAdapter,
-        ));
-        $client->setResponse(new CustomResponse());
-        $response = $client->send();
-
-        $this->assertInstanceOf('ZendTest\Http\CustomResponse', $response);
-        $this->assertEquals(497, $response->getStatusCode());
-        $this->assertEquals('Whatever content', $response->getContent());
-    }
-
     public function testPrepareHeadersCreateRightHttpField()
     {
         $body = json_encode(array('foofoo'=>'barbar'));
@@ -403,20 +358,125 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         $prepareHeadersReflection->setAccessible(true);
 
         $request= new Request();
-        $request->getHeaders()->addHeaderLine('content-type','application/json');
-        $request->getHeaders()->addHeaderLine('content-length',strlen($body));
+        $request->getHeaders()->addHeaderLine('content-type', 'application/json');
+        $request->getHeaders()->addHeaderLine('content-length', strlen($body));
         $client->setRequest($request);
 
         $client->setEncType('application/json');
 
-        $this->assertSame($client->getRequest(),$request);
+        $this->assertSame($client->getRequest(), $request);
 
-        $headers = $prepareHeadersReflection->invoke($client,$body,new Http('http://localhost:5984'));
+        $headers = $prepareHeadersReflection->invoke($client, $body, new Http('http://localhost:5984'));
 
         $this->assertArrayNotHasKey('content-type', $headers);
         $this->assertArrayHasKey('Content-Type', $headers);
 
         $this->assertArrayNotHasKey('content-length', $headers);
         $this->assertArrayHasKey('Content-Length', $headers);
+    }
+
+    public function testPrepareHeadersCurlDigestAuthentication()
+    {
+        $body = json_encode(array('foofoo'=>'barbar'));
+
+        $client = new Client();
+        $prepareHeadersReflection = new \ReflectionMethod($client, 'prepareHeaders');
+        $prepareHeadersReflection->setAccessible(true);
+
+        $request = new Request();
+        $request->getHeaders()->addHeaderLine('Authorization: Digest');
+        $request->getHeaders()->addHeaderLine('content-type', 'application/json');
+        $request->getHeaders()->addHeaderLine('content-length', strlen($body));
+        $client->setRequest($request);
+
+        $this->assertSame($client->getRequest(), $request);
+
+        $headers = $prepareHeadersReflection->invoke($client, $body, new Http('http://localhost:5984'));
+
+        $this->assertInternalType('array', $headers);
+        $this->assertArrayHasKey('Authorization', $headers);
+        $this->assertContains('Digest', $headers['Authorization']);
+    }
+
+    /**
+     * @group 6301
+     */
+    public function testCanSpecifyCustomAuthMethodsInExtendingClasses()
+    {
+        $client = new ExtendedClient();
+
+        $client->setAuth('username', 'password', ExtendedClient::AUTH_CUSTOM);
+
+        $this->assertAttributeEquals(
+            array(
+                'user'     => 'username',
+                'password' => 'password',
+                'type'     => ExtendedClient::AUTH_CUSTOM,
+            ),
+            'auth',
+            $client
+        );
+    }
+
+    /**
+     * @group 6231
+     */
+    public function testHttpQueryParametersCastToString()
+    {
+        $client = new Client();
+
+        /* @var $adapter \PHPUnit_Framework_MockObject_MockObject|\Zend\Http\Client\Adapter\AdapterInterface */
+        $adapter = $this->getMock('Zend\Http\Client\Adapter\AdapterInterface');
+
+        $client->setAdapter($adapter);
+
+        $request = new Request();
+
+        $request->setUri('http://example.com/');
+        $request->getQuery()->set('foo', 'bar');
+
+        $response = new Response();
+
+        $adapter
+            ->expects($this->once())
+            ->method('write')
+            ->with(Request::METHOD_GET, 'http://example.com/?foo=bar');
+
+        $adapter
+            ->expects($this->any())
+            ->method('read')
+            ->will($this->returnValue($response->toString()));
+
+        $client->send($request);
+    }
+
+    /**
+     * @group 6959
+     */
+    public function testClientRequestMethod()
+    {
+        $request = new Request;
+        $request->setMethod(Request::METHOD_POST);
+        $request->getPost()->set('data', 'random');
+
+        $client = new Client;
+        $client->setAdapter('Zend\Http\Client\Adapter\Test');
+        $client->send($request);
+
+        $this->assertSame(Client::ENC_URLENCODED, $client->getEncType());
+    }
+
+    /**
+     * @group 7332
+     */
+    public function testAllowsClearingEncType()
+    {
+        $client = new Client();
+        $client->setEncType('application/x-www-form-urlencoded');
+
+        $this->assertEquals('application/x-www-form-urlencoded', $client->getEncType());
+
+        $client->setEncType(null);
+        $this->assertNull($client->getEncType());
     }
 }

@@ -3,7 +3,7 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
@@ -16,7 +16,7 @@ use SplStack;
 use stdClass;
 use Zend\Db\ResultSet\ResultSet;
 
-class ResultSetTest extends TestCase
+class ResultSetIntegrationTest extends TestCase
 {
     /**
      * @var ResultSet
@@ -29,7 +29,6 @@ class ResultSetTest extends TestCase
      */
     protected function setUp()
     {
-
         $this->resultSet = new ResultSet;
     }
 
@@ -186,7 +185,11 @@ class ResultSetTest extends TestCase
         $this->assertEquals($dataSource->getArrayCopy(), $test, var_export($test, 1));
     }
 
-    public function testBufferingCallsDatasourceCurrentOnce()
+    /**
+     * @covers Zend\Db\ResultSet\AbstractResultSet::current
+     * @covers Zend\Db\ResultSet\AbstractResultSet::buffer
+     */
+    public function testCurrentWithBufferingCallsDataSourceCurrentOnce()
     {
         $mockResult = $this->getMock('Zend\Db\Adapter\Driver\ResultInterface');
         $mockResult->expects($this->once())->method('current')->will($this->returnValue(array('foo' => 'bar')));
@@ -199,7 +202,11 @@ class ResultSetTest extends TestCase
         $this->resultSet->current();
     }
 
-    public function testCallingBufferAfterIterationThrowsException()
+    /**
+     * @covers Zend\Db\ResultSet\AbstractResultSet::current
+     * @covers Zend\Db\ResultSet\AbstractResultSet::buffer
+     */
+    public function testBufferCalledAfterIterationThrowsException()
     {
         $this->resultSet->initialize($this->getMock('Zend\Db\Adapter\Driver\ResultInterface'));
         $this->resultSet->current();
@@ -207,5 +214,4 @@ class ResultSetTest extends TestCase
         $this->setExpectedException('Zend\Db\ResultSet\Exception\RuntimeException', 'Buffering must be enabled before iteration is started');
         $this->resultSet->buffer();
     }
-
 }

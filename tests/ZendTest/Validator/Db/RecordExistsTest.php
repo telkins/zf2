@@ -3,7 +3,7 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
@@ -236,7 +236,7 @@ class RecordExistsTest extends \PHPUnit_Framework_TestCase
                                       'field1', null, $this->getMockHasResult());
         $table = $validator->getSelect()->getRawState('table');
         $this->assertInstanceOf('Zend\Db\Sql\TableIdentifier', $table);
-        $this->assertEquals(array('users','my'), $table->getTableAndSchema());
+        $this->assertEquals(array('users', 'my'), $table->getTableAndSchema());
     }
 
     public function testEqualsMessageTemplates()
@@ -272,5 +272,40 @@ class RecordExistsTest extends \PHPUnit_Framework_TestCase
         $parameters = $statement->getParameterContainer();
         $this->assertNull($parameters['where1']);
         $this->assertEquals($parameters['where2'], 'bar');
+    }
+
+    /**
+     * @cover Zend\Validator\Db\RecordExists::getSelect
+     * @group ZF2-4521
+     */
+    public function testGetSelectWithSameValidatorTwice()
+    {
+        $validator = new RecordExists(
+            array(
+                'table' => 'users',
+                'schema' => 'my'
+            ),
+            'field1',
+            array(
+                'field' => 'foo',
+                'value' => 'bar'
+            ),
+            $this->getMockHasResult()
+        );
+        $select = $validator->getSelect();
+        $this->assertInstanceOf('Zend\Db\Sql\Select', $select);
+        $this->assertEquals('SELECT "my"."users"."field1" AS "field1" FROM "my"."users" WHERE "field1" = \'\' AND "foo" != \'bar\'', $select->getSqlString(new TrustingSql92Platform()));
+
+        // same validator instance with changing properties
+        $validator->setTable('othertable');
+        $validator->setSchema('otherschema');
+        $validator->setField('fieldother');
+        $validator->setExclude(array(
+            'field' => 'fieldexclude',
+            'value' => 'fieldvalueexclude',
+        ));
+        $select = $validator->getSelect();
+        $this->assertInstanceOf('Zend\Db\Sql\Select', $select);
+        $this->assertEquals('SELECT "otherschema"."othertable"."fieldother" AS "fieldother" FROM "otherschema"."othertable" WHERE "fieldother" = \'\' AND "fieldexclude" != \'fieldvalueexclude\'', $select->getSqlString(new TrustingSql92Platform()));
     }
 }

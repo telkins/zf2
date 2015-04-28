@@ -3,7 +3,7 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
@@ -16,7 +16,6 @@ use Zend\Mail\Header\ContentType;
  */
 class ContentTypeTest extends \PHPUnit_Framework_TestCase
 {
-
     public function testContentTypeFromStringCreatesValidContentTypeHeader()
     {
         $contentTypeHeader = ContentType::fromString('Content-Type: xxx/yyy');
@@ -44,6 +43,18 @@ class ContentTypeTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals("Content-Type: foo/bar", $contentTypeHeader->toString());
     }
 
+    /**
+     * @group 6491
+     */
+    public function testTrailingSemiColonFromString()
+    {
+        $contentTypeHeader = ContentType::fromString(
+            'Content-Type: multipart/alternative; boundary="Apple-Mail=_1B852F10-F9C6-463D-AADD-CD503A5428DD";'
+        );
+        $params = $contentTypeHeader->getParameters();
+        $this->assertEquals($params, array('boundary' => 'Apple-Mail=_1B852F10-F9C6-463D-AADD-CD503A5428DD'));
+    }
+
     public function testProvidingParametersIntroducesHeaderFolding()
     {
         $header = new ContentType();
@@ -61,7 +72,13 @@ class ContentTypeTest extends \PHPUnit_Framework_TestCase
             'Content-Type: multipart/alternative; boundary="Apple-Mail=_1B852F10-F9C6-463D-AADD-CD503A5428DD"'
         );
         $params = $contentTypeHeader->getParameters();
-        $this->assertEquals($params,array('boundary' => 'Apple-Mail=_1B852F10-F9C6-463D-AADD-CD503A5428DD'));
+        $this->assertEquals($params, array('boundary' => 'Apple-Mail=_1B852F10-F9C6-463D-AADD-CD503A5428DD'));
+    }
+
+    public function testExtractsExtraInformationWithoutBeingConfusedByTrailingSemicolon()
+    {
+        $header = ContentType::fromString('Content-Type: application/pdf;name="foo.pdf";');
+        $this->assertEquals($header->getParameters(), array('name' => 'foo.pdf'));
     }
 
     /**

@@ -3,7 +3,7 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
@@ -110,5 +110,22 @@ class MailTest extends \PHPUnit_Framework_TestCase
         $filters = self::readAttribute($writer, 'filters');
         $this->assertCount(1, $filters);
         $this->assertEquals($filter, $filters[0]);
+    }
+
+    public function testConstructWithMailAsArrayOptions()
+    {
+        $messageOptions = array(
+            'encoding'  => 'UTF-8',
+            'from'      => 'matthew@example.com',
+            'to'        => 'zf-devteam@example.com',
+            'subject'   => 'subject',
+            'body'      => 'body',
+        );
+
+        $writer = new MailWriter(array(
+            'mail' => $messageOptions,
+        ));
+
+        $this->assertAttributeInstanceOf('Zend\Mail\Message', 'mail', $writer);
     }
 }

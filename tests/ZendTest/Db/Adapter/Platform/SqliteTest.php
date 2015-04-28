@@ -3,7 +3,7 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
@@ -58,7 +58,7 @@ class SqliteTest extends \PHPUnit_Framework_TestCase
     {
         $this->assertEquals('"identifier"', $this->platform->quoteIdentifierChain('identifier'));
         $this->assertEquals('"identifier"', $this->platform->quoteIdentifierChain(array('identifier')));
-        $this->assertEquals('"schema"."identifier"', $this->platform->quoteIdentifierChain(array('schema','identifier')));
+        $this->assertEquals('"schema"."identifier"', $this->platform->quoteIdentifierChain(array('schema', 'identifier')));
     }
 
     /**
@@ -72,13 +72,24 @@ class SqliteTest extends \PHPUnit_Framework_TestCase
     /**
      * @covers Zend\Db\Adapter\Platform\Sqlite::quoteValue
      */
-    public function testQuoteValue()
+    public function testQuoteValueRaisesNoticeWithoutPlatformSupport()
     {
         $this->setExpectedException(
-            'PHPUnit_Framework_Error',
+            'PHPUnit_Framework_Error_Notice',
             'Attempting to quote a value in Zend\Db\Adapter\Platform\Sqlite without extension/driver support can introduce security vulnerabilities in a production environment'
         );
-        $this->assertEquals("'value'", $this->platform->quoteValue('value'));
+        $this->platform->quoteValue('value');
+    }
+
+    /**
+     * @covers Zend\Db\Adapter\Platform\Sqlite::quoteValue
+     */
+    public function testQuoteValue()
+    {
+        $this->assertEquals("'value'", @$this->platform->quoteValue('value'));
+        $this->assertEquals("'Foo O\\'Bar'", @$this->platform->quoteValue("Foo O'Bar"));
+        $this->assertEquals('\'\\\'; DELETE FROM some_table; -- \'', @$this->platform->quoteValue('\'; DELETE FROM some_table; -- '));
+        $this->assertEquals("'\\\\\\'; DELETE FROM some_table; -- '", @$this->platform->quoteValue('\\\'; DELETE FROM some_table; -- '));
     }
 
     /**
@@ -130,5 +141,41 @@ class SqliteTest extends \PHPUnit_Framework_TestCase
             '("foo"."bar" = "boo"."baz") AND ("foo"."baz" = "boo"."baz")',
             $this->platform->quoteIdentifierInFragment('(foo.bar = boo.baz) AND (foo.baz = boo.baz)', array('(', ')', '=', 'and'))
         );
+
+        // case insensitive safe words in field
+        $this->assertEquals(
+            '("foo"."bar" = "boo".baz) AND ("foo".baz = "boo".baz)',
+            $this->platform->quoteIdentifierInFragment('(foo.bar = boo.baz) AND (foo.baz = boo.baz)', array('(', ')', '=', 'and', 'bAz'))
+        );
+    }
+
+    /**
+     * @covers Zend\Db\Adapter\Platform\Sqlite::quoteValue
+     * @covers Zend\Db\Adapter\Platform\Sqlite::quoteTrustedValue
+     */
+    public function testCanCloseConnectionAfterQuoteValue()
+    {
+        // Creating the SQLite database file
+        $filePath = realpath(__DIR__) . "/_files/sqlite.db";
+        if (!file_exists($filePath)) {
+            touch($filePath);
+        }
+
+        $driver = new \Zend\Db\Adapter\Driver\Pdo\Pdo(array(
+            'driver' => 'Pdo_Sqlite',
+            'database' => $filePath
+        ));
+
+        $this->platform->setDriver($driver);
+
+        $this->platform->quoteValue("some; random]/ value");
+        $this->platform->quoteTrustedValue("some; random]/ value");
+
+        // Closing the connection so we can delete the file
+        $driver->getConnection()->disconnect();
+
+        @unlink($filePath);
+
+        $this->assertFalse(file_exists($filePath));
     }
 }

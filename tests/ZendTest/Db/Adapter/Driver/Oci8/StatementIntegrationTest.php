@@ -3,7 +3,7 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
@@ -18,7 +18,6 @@ use Zend\Db\Adapter\Driver\Oci8\Statement;
  */
 class StatementIntegrationTest extends \PHPUnit_Framework_TestCase
 {
-
     protected $variables = array(
         'hostname' => 'ZEND_DB_ADAPTER_DRIVER_OCI8_HOSTNAME',
         'username' => 'ZEND_DB_ADAPTER_DRIVER_OCI8_USERNAME',
@@ -48,7 +47,7 @@ class StatementIntegrationTest extends \PHPUnit_Framework_TestCase
      */
     public function testInitialize()
     {
-        $ociResource = oci_connect($this->variables['username'], $this->variables['password']);
+        $ociResource = oci_connect($this->variables['username'], $this->variables['password'], $this->variables['hostname']);
 
         $statement = new Statement;
         $this->assertSame($statement, $statement->initialize($ociResource));
@@ -60,7 +59,7 @@ class StatementIntegrationTest extends \PHPUnit_Framework_TestCase
      */
     public function testGetResource()
     {
-        $ociResource = oci_connect($this->variables['username'], $this->variables['password']);
+        $ociResource = oci_connect($this->variables['username'], $this->variables['password'], $this->variables['hostname']);
 
         $statement = new Statement;
         $statement->initialize($ociResource);
@@ -76,7 +75,7 @@ class StatementIntegrationTest extends \PHPUnit_Framework_TestCase
      */
     public function testPrepare()
     {
-        $ociResource = oci_connect($this->variables['username'], $this->variables['password']);
+        $ociResource = oci_connect($this->variables['username'], $this->variables['password'], $this->variables['hostname']);
 
         $statement = new Statement;
         $statement->initialize($ociResource);

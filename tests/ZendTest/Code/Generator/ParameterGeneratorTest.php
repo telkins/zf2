@@ -3,7 +3,7 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
@@ -14,13 +14,11 @@ use Zend\Code\Generator\ValueGenerator;
 use Zend\Code\Reflection\ParameterReflection;
 
 /**
- *
  * @group Zend_Code_Generator
  * @group Zend_Code_Generator_Php
  */
 class ParameterGeneratorTest extends \PHPUnit_Framework_TestCase
 {
-
     public function testTypeGetterAndSetterPersistValue()
     {
         $parameterGenerator = new ParameterGenerator();
@@ -76,7 +74,7 @@ class ParameterGeneratorTest extends \PHPUnit_Framework_TestCase
         $reflectionParameter = $this->getFirstReflectionParameter('type');
         $codeGenParam = ParameterGenerator::fromReflection($reflectionParameter);
 
-        $this->assertEquals('stdClass', $codeGenParam->getType());
+        $this->assertEquals('\\stdClass', $codeGenParam->getType());
     }
 
     public function testFromReflectionGetReference()
@@ -143,7 +141,7 @@ class ParameterGeneratorTest extends \PHPUnit_Framework_TestCase
     {
         return array(
             array('name', '$param'),
-            array('type', 'stdClass $bar'),
+            array('type', '\\stdClass $bar'),
             array('reference', '&$baz'),
             array('defaultValue', '$value = \'foo\''),
             array('defaultNull', '$value = null'),
@@ -162,7 +160,7 @@ class ParameterGeneratorTest extends \PHPUnit_Framework_TestCase
 
     /**
      * @param  string                               $method
-     * @return \Zend\Reflection\ReflectionParameter
+     * @return \Zend\Code\Reflection\ParameterReflection
      */
     protected function getFirstReflectionParameter($method)
     {
@@ -212,5 +210,36 @@ class ParameterGeneratorTest extends \PHPUnit_Framework_TestCase
         $param = ParameterGenerator::fromReflection($params[0]);
 
         $this->assertEquals('\ZendTest_Code_NsTest_BarClass', $param->getType());
+    }
+
+    /**
+     * @group 5193
+     */
+    public function testTypehintsWithNamespaceInNamepsacedClassReturnTypewithBackslash()
+    {
+        require_once __DIR__ . '/TestAsset/NamespaceTypeHintClass.php';
+
+        $reflClass = new \Zend\Code\Reflection\ClassReflection('Namespaced\TypeHint\Bar');
+        $params = $reflClass->getMethod('method')->getParameters();
+
+        $param = ParameterGenerator::fromReflection($params[0]);
+
+        $this->assertEquals('\OtherNamespace\ParameterClass', $param->getType());
+    }
+
+    /**
+     * @group 6023
+     *
+     * @coversNothing
+     */
+    public function testGeneratedParametersHaveEscapedDefaultValues()
+    {
+        $parameter = new ParameterGenerator();
+
+        $parameter->setName('foo');
+        $parameter->setDefaultValue("\\'");
+        $parameter->setType('stdClass');
+
+        $this->assertSame("stdClass \$foo = '\\\\\\''", $parameter->generate());
     }
 }

@@ -3,7 +3,7 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
@@ -49,6 +49,7 @@ class PostgresqlTest extends \PHPUnit_Framework_TestCase
     public function testQuoteIdentifier()
     {
         $this->assertEquals('"identifier"', $this->platform->quoteIdentifier('identifier'));
+        $this->assertEquals('"identifier ""with"" double-quotes"', $this->platform->quoteIdentifier('identifier "with" double-quotes'));
     }
 
     /**
@@ -58,7 +59,8 @@ class PostgresqlTest extends \PHPUnit_Framework_TestCase
     {
         $this->assertEquals('"identifier"', $this->platform->quoteIdentifierChain('identifier'));
         $this->assertEquals('"identifier"', $this->platform->quoteIdentifierChain(array('identifier')));
-        $this->assertEquals('"schema"."identifier"', $this->platform->quoteIdentifierChain(array('schema','identifier')));
+        $this->assertEquals('"schema"."identifier"', $this->platform->quoteIdentifierChain(array('schema', 'identifier')));
+        $this->assertEquals('"schema"."identifier ""with"" double-quotes"', $this->platform->quoteIdentifierChain(array('schema', 'identifier "with" double-quotes')));
     }
 
     /**
@@ -72,13 +74,24 @@ class PostgresqlTest extends \PHPUnit_Framework_TestCase
     /**
      * @covers Zend\Db\Adapter\Platform\Postgresql::quoteValue
      */
-    public function testQuoteValue()
+    public function testQuoteValueRaisesNoticeWithoutPlatformSupport()
     {
         $this->setExpectedException(
-            'PHPUnit_Framework_Error',
+            'PHPUnit_Framework_Error_Notice',
             'Attempting to quote a value in Zend\Db\Adapter\Platform\Postgresql without extension/driver support can introduce security vulnerabilities in a production environment'
         );
-        $this->assertEquals("'value'", $this->platform->quoteValue('value'));
+        $this->platform->quoteValue('value');
+    }
+
+    /**
+     * @covers Zend\Db\Adapter\Platform\Postgresql::quoteValue
+     */
+    public function testQuoteValue()
+    {
+        $this->assertEquals("E'value'", @$this->platform->quoteValue('value'));
+        $this->assertEquals("E'Foo O\\'Bar'", @$this->platform->quoteValue("Foo O'Bar"));
+        $this->assertEquals('E\'\\\'; DELETE FROM some_table; -- \'', @$this->platform->quoteValue('\'; DELETE FROM some_table; -- '));
+        $this->assertEquals("E'\\\\\\'; DELETE FROM some_table; -- '", @$this->platform->quoteValue('\\\'; DELETE FROM some_table; -- '));
     }
 
     /**
@@ -86,12 +99,12 @@ class PostgresqlTest extends \PHPUnit_Framework_TestCase
      */
     public function testQuoteTrustedValue()
     {
-        $this->assertEquals("'value'", $this->platform->quoteTrustedValue('value'));
-        $this->assertEquals("'Foo O\\'Bar'", $this->platform->quoteTrustedValue("Foo O'Bar"));
-        $this->assertEquals('\'\\\'; DELETE FROM some_table; -- \'', $this->platform->quoteTrustedValue('\'; DELETE FROM some_table; -- '));
+        $this->assertEquals("E'value'", $this->platform->quoteTrustedValue('value'));
+        $this->assertEquals("E'Foo O\\'Bar'", $this->platform->quoteTrustedValue("Foo O'Bar"));
+        $this->assertEquals('E\'\\\'; DELETE FROM some_table; -- \'', $this->platform->quoteTrustedValue('\'; DELETE FROM some_table; -- '));
 
         //                   '\\\'; DELETE FROM some_table; -- '  <- actual below
-        $this->assertEquals("'\\\\\\'; DELETE FROM some_table; -- '", $this->platform->quoteTrustedValue('\\\'; DELETE FROM some_table; -- '));
+        $this->assertEquals("E'\\\\\\'; DELETE FROM some_table; -- '", $this->platform->quoteTrustedValue('\\\'; DELETE FROM some_table; -- '));
     }
 
     /**
@@ -103,7 +116,7 @@ class PostgresqlTest extends \PHPUnit_Framework_TestCase
             'PHPUnit_Framework_Error',
             'Attempting to quote a value in Zend\Db\Adapter\Platform\Postgresql without extension/driver support can introduce security vulnerabilities in a production environment'
         );
-        $this->assertEquals("'Foo O\\'Bar'", $this->platform->quoteValueList("Foo O'Bar"));
+        $this->assertEquals("'Foo O\'\'Bar'", $this->platform->quoteValueList("Foo O'Bar"));
     }
 
     /**
@@ -129,6 +142,12 @@ class PostgresqlTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals(
             '("foo"."bar" = "boo"."baz") AND ("foo"."baz" = "boo"."baz")',
             $this->platform->quoteIdentifierInFragment('(foo.bar = boo.baz) AND (foo.baz = boo.baz)', array('(', ')', '=', 'and'))
+        );
+
+        // case insensitive safe words in field
+        $this->assertEquals(
+            '("foo"."bar" = "boo".baz) AND ("foo".baz = "boo".baz)',
+            $this->platform->quoteIdentifierInFragment('(foo.bar = boo.baz) AND (foo.baz = boo.baz)', array('(', ')', '=', 'and', 'bAz'))
         );
     }
 }

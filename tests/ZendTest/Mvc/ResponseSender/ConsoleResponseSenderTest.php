@@ -3,7 +3,7 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
@@ -35,7 +35,7 @@ class ConsoleResponseSenderTest extends TestCase
         $mockSendResponseEvent = $this->getSendResponseEventMock($mockResponse);
         $mockSendResponseEvent->expects($this->once())->method('setContentSent');
         $mockSendResponseEvent->expects($this->any())->method('contentSent')->will($this->returnCallback(
-            function() use (&$returnValue) {
+            function () use (&$returnValue) {
                 if (false === $returnValue) {
                     $returnValue = true;
                     return false;
@@ -54,7 +54,6 @@ class ConsoleResponseSenderTest extends TestCase
         $body = ob_get_clean();
         $this->assertEquals('', $body);
         $this->assertEquals(0, $result);
-
     }
 
     protected function getSendResponseEventMock($response)

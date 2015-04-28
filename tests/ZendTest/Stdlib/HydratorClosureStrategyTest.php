@@ -3,7 +3,7 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
@@ -17,7 +17,6 @@ use Zend\Stdlib\Hydrator\Strategy\ClosureStrategy;
  */
 class HydratorClosureStrategyTest extends \PHPUnit_Framework_TestCase
 {
-
     /**
      * The hydrator that is used during testing.
      *
@@ -73,13 +72,13 @@ class HydratorClosureStrategyTest extends \PHPUnit_Framework_TestCase
     public function testExtractingObjects()
     {
         $this->hydrator->addStrategy('field1', new ClosureStrategy(
-            function($value) {
+            function ($value) {
                 return sprintf('%s', $value);
             },
             null
         ));
         $this->hydrator->addStrategy('field2', new ClosureStrategy(
-            function($value) {
+            function ($value) {
                 return sprintf('hello, %s!', $value);
             },
             null
@@ -96,13 +95,13 @@ class HydratorClosureStrategyTest extends \PHPUnit_Framework_TestCase
     {
         $this->hydrator->addStrategy('field2', new ClosureStrategy(
             null,
-            function($value) {
+            function ($value) {
                 return sprintf('hello, %s!', $value);
             }
         ));
         $this->hydrator->addStrategy('field3', new ClosureStrategy(
             null,
-            function($value) {
+            function ($value) {
                 return new TestAsset\HydratorClosureStrategyEntity($value, sprintf('111%s', $value));
             }
         ));
@@ -118,5 +117,4 @@ class HydratorClosureStrategyTest extends \PHPUnit_Framework_TestCase
 
         $this->assertInstanceOf('ZendTest\Stdlib\TestAsset\HydratorClosureStrategyEntity', $entity->field3);
     }
-
 }

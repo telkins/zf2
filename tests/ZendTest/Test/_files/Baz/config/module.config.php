@@ -23,6 +23,16 @@ return array(
                         ),
                     ),
                 ),
+                'arguments-mandatory' => array(
+                    'type' => 'simple',
+                    'options' => array(
+                        'route'    => 'foo --bar= --baz=',
+                        'defaults' => array(
+                            'controller' => 'baz_index',
+                            'action'     => 'console',
+                        ),
+                    ),
+                )
             ),
         ),
     ),
@@ -45,6 +55,16 @@ return array(
                     'defaults' => array(
                         'controller' => 'baz_index',
                         'action'     => 'unittests',
+                    ),
+                ),
+            ),
+            'persistence' => array(
+                'type' => 'literal',
+                'options' => array(
+                    'route'    => '/tests-persistence',
+                    'defaults' => array(
+                        'controller' => 'baz_index',
+                        'action'     => 'persistencetest',
                     ),
                 ),
             ),
@@ -78,6 +98,16 @@ return array(
                     'defaults' => array(
                         'controller' => 'baz_index',
                         'action'     => 'unittests',
+                    ),
+                ),
+            ),
+            'custom-response' => array(
+                'type' => 'literal',
+                'options' => array(
+                    'route'    => '/custom-response',
+                    'defaults' => array(
+                        'controller' => 'baz_index',
+                        'action'     => 'custom-response',
                     ),
                 ),
             ),

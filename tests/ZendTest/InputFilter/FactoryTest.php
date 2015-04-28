@@ -3,7 +3,7 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
@@ -216,7 +216,6 @@ class FactoryTest extends TestCase
         $this->assertInstanceOf('Zend\InputFilter\InputInterface', $input);
         $this->assertFalse($input->isRequired());
         $this->assertFalse($input->allowEmpty());
-
     }
 
     public function testFactoryWillCreateInputWithSuggestedAllowEmptyFlagAndImpliesRequiredFlag()
@@ -439,12 +438,14 @@ class FactoryTest extends TestCase
 
         $inputFilter = $factory->createInputFilter(array(
             'type'        => 'Zend\InputFilter\CollectionInputFilter',
+            'required'    => true,
             'inputfilter' => new InputFilter(),
-            'count'       => 3
+            'count'       => 3,
         ));
 
         $this->assertInstanceOf('Zend\InputFilter\CollectionInputFilter', $inputFilter);
         $this->assertInstanceOf('Zend\InputFilter\InputFilter', $inputFilter->getInputFilter());
+        $this->assertTrue($inputFilter->getIsRequired());
         $this->assertEquals(3, $inputFilter->getCount());
     }
 
@@ -485,7 +486,7 @@ class FactoryTest extends TestCase
         // Filters should pop in the following order:
         // string_to_upper (1001), string_to_lower (1000), string_trim (999)
         $index = 0;
-        foreach($input->getFilterChain()->getFilters() as $filter) {
+        foreach ($input->getFilterChain()->getFilters() as $filter) {
             switch ($index) {
                 case 0:
                     $this->assertInstanceOf('Zend\Filter\StringToUpper', $filter);
@@ -566,5 +567,96 @@ class FactoryTest extends TestCase
         $factory = new Factory();
         $factory->setInputFilterManager($inputFilterManager);
         $this->assertSame($inputFilterManager, $factory->getInputFilterManager());
+    }
+
+    public function testSetInputFilterManagerOnConstruct()
+    {
+        $inputFilterManager = new InputFilterPluginManager();
+        $factory = new Factory($inputFilterManager);
+        $this->assertSame($inputFilterManager, $factory->getInputFilterManager());
+    }
+
+    /**
+     * @group 5691
+     *
+     * @covers \Zend\InputFilter\Factory::createInput
+     */
+    public function testSetsBreakChainOnFailure()
+    {
+        $factory = new Factory();
+
+        $this->assertTrue($factory->createInput(array('break_on_failure' => true))->breakOnFailure());
+
+        $this->assertFalse($factory->createInput(array('break_on_failure' => false))->breakOnFailure());
+    }
+
+    public function testCanCreateInputFilterWithNullInputs()
+    {
+        $factory = new Factory();
+
+        $inputFilter = $factory->createInputFilter(array(
+            'foo' => array(
+                'name' => 'foo',
+            ),
+            'bar' => null,
+            'baz' => array(
+                'name' => 'baz',
+            ),
+        ));
+
+        $this->assertInstanceOf('Zend\InputFilter\InputFilter', $inputFilter);
+        $this->assertEquals(2, count($inputFilter));
+        $this->assertTrue($inputFilter->has('foo'));
+        $this->assertFalse($inputFilter->has('bar'));
+        $this->assertTrue($inputFilter->has('baz'));
+    }
+
+    /**
+     * @group 7010
+     */
+    public function testCanCreateInputFromProvider()
+    {
+        /* @group $provider \Zend\InputFilter\InputProviderInterface|\PHPUnit_Framework_MockObject_MockObject */
+        $provider = $this->getMock('Zend\InputFilter\InputProviderInterface', array('getInputSpecification'));
+
+        $provider
+            ->expects($this->any())
+            ->method('getInputSpecification')
+            ->will($this->returnValue(array('name' => 'foo')));
+
+        $factory = new Factory();
+        $input   = $factory->createInput($provider);
+
+        $this->assertInstanceOf('Zend\InputFilter\InputInterface', $input);
+    }
+
+    /**
+     * @group 7010
+     */
+    public function testCanCreateInputFilterFromProvider()
+    {
+        /* @group $provider \Zend\InputFilter\InputFilterProviderInterface|\PHPUnit_Framework_MockObject_MockObject */
+        $provider = $this->getMock(
+            'Zend\InputFilter\InputFilterProviderInterface',
+            array('getInputFilterSpecification')
+        );
+        $provider
+            ->expects($this->any())
+            ->method('getInputFilterSpecification')
+            ->will($this->returnValue(array(
+                'foo' => array(
+                    'name'       => 'foo',
+                    'required'   => false,
+                ),
+                'baz' => array(
+                    'name'       => 'baz',
+                    'required'   => true,
+                ),
+            )));
+
+        $factory     = new Factory();
+        $inputFilter = $factory->createInputFilter($provider);
+
+        $this->assertInstanceOf('Zend\InputFilter\InputFilterInterface', $inputFilter);
     }
 }

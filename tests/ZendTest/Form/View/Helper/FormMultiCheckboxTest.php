@@ -3,7 +3,7 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
@@ -95,7 +95,6 @@ class FormMultiCheckboxTest extends CommonTestCase
             sprintf('>%s</label>', 'This is the third label'), $markup
         );
         $this->assertContains(sprintf('value="%s"', 'value3'), $markup);
-
     }
 
     public function testGenerateCheckBoxesAndHiddenElement()
@@ -195,7 +194,7 @@ class FormMultiCheckboxTest extends CommonTestCase
     {
         $element = $this->getElement();
         $markup  = $this->helper->render($element);
-        $this->assertContains('foo[]', $markup);
+        $this->assertContains('foo&#x5B;&#x5D;', $markup);
     }
 
     public function testInvokeWithNoElementChainsHelper()
@@ -271,14 +270,6 @@ class FormMultiCheckboxTest extends CommonTestCase
     public function testRenderElementWithNoNameRaisesException()
     {
         $element = new MultiCheckboxElement(null);
-
-        $this->setExpectedException('Zend\Form\Exception\DomainException');
-        $this->helper->render($element);
-    }
-
-    public function testRenderElementWithNoValueOptionsRaisesException()
-    {
-        $element = new MultiCheckboxElement('foo');
 
         $this->setExpectedException('Zend\Form\Exception\DomainException');
         $this->helper->render($element);
@@ -362,21 +353,21 @@ class FormMultiCheckboxTest extends CommonTestCase
     public function testGetDisableAttributeReturnTrue()
     {
         $element = new MultiCheckboxElement('foo');
-        $element->setAttribute('disabled', 'true' );
+        $element->setAttribute('disabled', 'true');
         $this->assertSame('true', $element->getAttribute('disabled'));
     }
 
     public function testGetSelectedAttributeReturnTrue()
     {
         $element = new MultiCheckboxElement('foo');
-        $element->setAttribute('selected', 'true' );
+        $element->setAttribute('selected', 'true');
         $this->assertSame('true', $element->getAttribute('selected'));
     }
 
     public function testGetDisableAttributeForGroupReturnTrue()
     {
         $element = new MultiCheckboxElement('foo');
-        $element->setAttribute('disabled', 'true' );
+        $element->setAttribute('disabled', 'true');
         $element->setValueOptions(array(
             array(
                 'label' => 'label1',
@@ -385,13 +376,12 @@ class FormMultiCheckboxTest extends CommonTestCase
         ));
         $markup  = $this->helper->render($element);
         $this->assertRegexp('#disabled="disabled" value="value1"#', $markup);
-
     }
 
     public function testGetSelectedAttributeForGroupReturnTrue()
     {
         $element = new MultiCheckboxElement('foo');
-        $element->setAttribute('selected', 'true' );
+        $element->setAttribute('selected', 'true');
         $element->setValueOptions(array(
             array(
                 'label' => 'label1',
@@ -400,6 +390,32 @@ class FormMultiCheckboxTest extends CommonTestCase
         ));
         $markup  = $this->helper->render($element);
         $this->assertRegexp('#value="value1" checked="checked"#', $markup);
+    }
 
+    public function testDisableEscapeHtmlHelper()
+    {
+        $element = new MultiCheckboxElement('foo');
+        $element->setLabelOptions(array(
+            'disable_html_escape' => true,
+        ));
+        $element->setValueOptions(array(
+            array(
+                'label' => '<span>label1</span>',
+                'value' => 'value1',
+            ),
+        ));
+        $markup  = $this->helper->render($element);
+        $this->assertRegexp('#<span>label1</span>#', $markup);
+    }
+
+    /**
+     * @group 6649
+     * @group 6655
+     */
+    public function testRenderWithoutValueOptions()
+    {
+        $element = new MultiCheckboxElement('foo');
+
+        $this->assertEmpty($this->helper->render($element));
     }
 }

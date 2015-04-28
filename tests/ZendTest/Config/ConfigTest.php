@@ -3,7 +3,7 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
@@ -108,7 +108,6 @@ class ConfigTest extends \PHPUnit_Framework_TestCase
 
         $this->leadingdot = array('.test' => 'dot-test');
         $this->invalidkey = array(' ' => 'test', ''=>'test2');
-
     }
 
     public function testLoadSingleSection()
@@ -147,7 +146,6 @@ class ConfigTest extends \PHPUnit_Framework_TestCase
         // create a new multi-level key
         $config->does = array('not'=> array('exist' => 'yet'));
         $this->assertEquals('yet', $config->does->not->exist);
-
     }
 
     public function testNoModifications()
@@ -184,6 +182,17 @@ class ConfigTest extends \PHPUnit_Framework_TestCase
             new Config($this->toCombineA)
         );
         $this->assertEquals(count($data->toArray()), $data->count());
+    }
+
+    public function testCountWithDoubleKeys()
+    {
+        $config = new Config(array(), true);
+
+        $config->foo = 1;
+        $config->foo = 2;
+        $this->assertSame(2, $config->foo);
+        $this->assertCount(1, $config->toArray());
+        $this->assertCount(1, $config);
     }
 
     public function testIterator()
@@ -293,7 +302,6 @@ class ConfigTest extends \PHPUnit_Framework_TestCase
         $value = $config->get('notthere', 'default');
         $this->assertTrue($value === 'default');
         $this->assertTrue($config->notThere === null);
-
     }
 
     public function testUnsetException()
@@ -320,7 +328,6 @@ class ConfigTest extends \PHPUnit_Framework_TestCase
 
         $this->assertFalse(isset($config->hostname));
         $this->assertFalse(isset($config->db->name));
-
     }
 
     public function testMerge()
@@ -371,7 +378,6 @@ class ConfigTest extends \PHPUnit_Framework_TestCase
 
         // config->replaceNumerical
         $this->assertSame(true, $configA->replaceNumerical);
-
     }
 
     public function testArrayAccess()
@@ -399,7 +405,7 @@ class ConfigTest extends \PHPUnit_Framework_TestCase
 
         // Define some values we'll be using
         $poem = array(
-            'poem' => array (
+            'poem' => array(
                 'line 1' => 'Roses are red, bacon is also red,',
                 'line 2' => 'Poems are hard,',
                 'line 3' => 'Bacon.',
@@ -480,7 +486,6 @@ class ConfigTest extends \PHPUnit_Framework_TestCase
 
         $this->assertEquals('override', $newConfig->key->nested, '$newConfig is not overridden');
         $this->assertEquals('parent', $parent->key->nested, '$parent has been overridden');
-
     }
 
     /**
@@ -594,7 +599,7 @@ class ConfigTest extends \PHPUnit_Framework_TestCase
 
     public function testZF6995_toArrayDoesNotDisturbInternalIterator()
     {
-        $config = new Config(range(1,10));
+        $config = new Config(range(1, 10));
         $config->rewind();
         $this->assertEquals(1, $config->current());
 

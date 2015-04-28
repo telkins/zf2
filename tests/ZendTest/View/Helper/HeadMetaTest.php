@@ -3,19 +3,18 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
 namespace ZendTest\View\Helper;
 
-use Zend\View\Helper\Placeholder\Registry as PlaceholderRegistry;
 use Zend\View\Renderer\PhpRenderer as View;
 use Zend\View\Helper;
 use Zend\View\Exception\ExceptionInterface as ViewException;
 
 /**
- * Test class for Zend_View_Helper_HeadMeta.
+ * Test class for Zend\View\Helper\HeadMeta.
  *
  * @group      Zend_View
  * @group      Zend_View_Helper
@@ -23,7 +22,7 @@ use Zend\View\Exception\ExceptionInterface as ViewException;
 class HeadMetaTest extends \PHPUnit_Framework_TestCase
 {
     /**
-     * @var Zend_View_Helper_HeadMeta
+     * @var Helper\HeadMeta
      */
     public $helper;
 
@@ -357,7 +356,6 @@ class HeadMetaTest extends \PHPUnit_Framework_TestCase
      */
     public function testContainerMaintainsCorrectOrderOfItems()
     {
-
         $this->helper->offsetSetName(1, 'keywords', 'foo');
         $this->helper->offsetSetName(10, 'description', 'foo');
         $this->helper->offsetSetHttpEquiv(20, 'pragma', 'baz');
@@ -526,4 +524,19 @@ class HeadMetaTest extends \PHPUnit_Framework_TestCase
         $this->assertRegExp("|<!\[endif\]-->$|", $html);
     }
 
+    public function testConditionalNoIE()
+    {
+        $html = $this->helper->appendHttpEquiv('foo', 'bar', array('conditional' => '!IE'))->toString();
+
+        $this->assertContains('<!--[if !IE]><!--><', $html);
+        $this->assertContains('<!--<![endif]-->', $html);
+    }
+
+    public function testConditionalNoIEWidthSpace()
+    {
+        $html = $this->helper->appendHttpEquiv('foo', 'bar', array('conditional' => '! IE'))->toString();
+
+        $this->assertContains('<!--[if ! IE]><!--><', $html);
+        $this->assertContains('<!--<![endif]-->', $html);
+    }
 }

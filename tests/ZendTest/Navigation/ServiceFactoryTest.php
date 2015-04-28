@@ -3,7 +3,7 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
@@ -15,7 +15,7 @@ use Zend\Mvc\Service\ServiceManagerConfig;
 use Zend\Navigation;
 use Zend\Navigation\Page\Mvc as MvcPage;
 use Zend\Navigation\Service\ConstructedNavigationFactory;
-use Zend\Navigation\Service\DefaultNavigationFactory;
+use Zend\Navigation\Service\NavigationAbstractServiceFactory;
 use Zend\ServiceManager\ServiceManager;
 
 /**
@@ -95,7 +95,6 @@ class ServiceFactoryTest extends \PHPUnit_Framework_TestCase
      */
     protected function tearDown()
     {
-
     }
 
     /**
@@ -252,6 +251,30 @@ class ServiceFactoryTest extends \PHPUnit_Framework_TestCase
         $this->serviceManager->setFactory('Navigation', $factory);
 
         $container = $this->serviceManager->get('Navigation');
+        $this->assertEquals(3, $container->count());
+    }
+
+    /**
+     * @covers \Zend\Navigation\Service\NavigationAbstractServiceFactory
+     */
+    public function testNavigationAbstractServiceFactory()
+    {
+        $factory = new NavigationAbstractServiceFactory();
+
+        $this->assertTrue(
+            $factory->canCreateServiceWithName($this->serviceManager, 'zendnavigationfile', 'Zend\Navigation\File')
+        );
+        $this->assertFalse(
+            $factory->canCreateServiceWithName($this->serviceManager, 'zendnavigationunknown', 'Zend\Navigation\Unknown')
+        );
+
+        $container = $factory->createServiceWithName(
+            $this->serviceManager,
+            'zendnavigationfile',
+            'Zend\Navigation\File'
+        );
+
+        $this->assertInstanceOf('Zend\Navigation\Navigation', $container);
         $this->assertEquals(3, $container->count());
     }
 }

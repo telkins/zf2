@@ -3,7 +3,7 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
@@ -17,18 +17,17 @@ use Zend\Cache\Storage\Adapter\Memory as MemoryAdapter;
  */
 class CapabilitiesTest extends \PHPUnit_Framework_TestCase
 {
-
     /**
      * Capabilities instance
      *
-     * @var Zend\Cache\Storage\Capabilities
+     * @var Capabilities
      */
     protected $_capabilities;
 
     /**
      * Base capabilities instance
      *
-     * @var Zend\Cache\Storage\Capabilities
+     * @var Capabilities
      */
     protected $_baseCapabilities;
 
@@ -42,7 +41,7 @@ class CapabilitiesTest extends \PHPUnit_Framework_TestCase
     /**
      * The storage adapter
      *
-     * @var Zend\Cache\Storage\Adapter
+     * @var MemoryAdapter
      */
     protected $_adapter;
 

@@ -3,7 +3,7 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
@@ -13,7 +13,7 @@ use Zend\Filter\Inflector as InflectorFilter;
 use Zend\Filter\FilterPluginManager;
 
 /**
- * Test class for Zend_Filter_Inflector.
+ * Test class for Zend\Filter\Inflector.
  *
  * @group      Zend_Filter
  */
@@ -107,8 +107,12 @@ class InflectorTest extends \PHPUnit_Framework_TestCase
         $this->assertSame($filter, $received);
     }
 
-    public function testSetFilterRuleWithArrayOfRulesCreatesRuleEntries()
+    public function testAddFilterRuleAppendsRuleEntries()
     {
+        if (!extension_loaded('intl')) {
+            $this->markTestSkipped('ext/intl not enabled');
+        }
+
         $rules = $this->inflector->getRules();
         $this->assertEquals(0, count($rules));
         $this->inflector->setFilterRule('controller', array('PregReplace', 'Alpha'));
@@ -116,18 +120,6 @@ class InflectorTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals(2, count($rules));
         $this->assertTrue($rules[0] instanceof \Zend\Filter\FilterInterface);
         $this->assertTrue($rules[1] instanceof \Zend\Filter\FilterInterface);
-    }
-
-    public function testAddFilterRuleAppendsRuleEntries()
-    {
-        $rules = $this->inflector->getRules();
-        $this->assertEquals(0, count($rules));
-        $this->inflector->setFilterRule('controller', 'PregReplace');
-        $rules = $this->inflector->getRules('controller');
-        $this->assertEquals(1, count($rules));
-        $this->inflector->addFilterRule('controller', 'Alpha');
-        $rules = $this->inflector->getRules('controller');
-        $this->assertEquals(2, count($rules));
     }
 
     public function testSetStaticRuleCreatesScalarRuleEntry()
@@ -166,6 +158,10 @@ class InflectorTest extends \PHPUnit_Framework_TestCase
 
     public function testAddRulesCreatesAppropriateRuleEntries()
     {
+        if (!extension_loaded('intl')) {
+            $this->markTestSkipped('ext/intl not enabled');
+        }
+
         $rules = $this->inflector->getRules();
         $this->assertEquals(0, count($rules));
         $this->inflector->addRules(array(
@@ -180,6 +176,10 @@ class InflectorTest extends \PHPUnit_Framework_TestCase
 
     public function testSetRulesCreatesAppropriateRuleEntries()
     {
+        if (!extension_loaded('intl')) {
+            $this->markTestSkipped('ext/intl not enabled');
+        }
+
         $this->inflector->setStaticRule('some-rules', 'some-value');
         $rules = $this->inflector->getRules();
         $this->assertEquals(1, count($rules));
@@ -195,6 +195,10 @@ class InflectorTest extends \PHPUnit_Framework_TestCase
 
     public function testGetRule()
     {
+        if (!extension_loaded('intl')) {
+            $this->markTestSkipped('ext/intl not enabled');
+        }
+
         $this->inflector->setFilterRule(':controller', array('Alpha', 'StringToLower'));
         $this->assertTrue($this->inflector->getRule('controller', 1) instanceof \Zend\Filter\StringToLower);
         $this->assertFalse($this->inflector->getRule('controller', 2));
@@ -410,6 +414,10 @@ class InflectorTest extends \PHPUnit_Framework_TestCase
      */
     public function testAddFilterRuleMultipleTimes()
     {
+        if (!extension_loaded('intl')) {
+            $this->markTestSkipped('ext/intl not enabled');
+        }
+
         $rules = $this->inflector->getRules();
         $this->assertEquals(0, count($rules));
         $this->inflector->setFilterRule('controller', 'PregReplace');
@@ -419,7 +427,7 @@ class InflectorTest extends \PHPUnit_Framework_TestCase
         $rules = $this->inflector->getRules('controller');
         $this->assertEquals(3, count($rules));
         $this->_context = 'StringToLower';
-        $this->inflector->setStaticRuleReference('context' , $this->_context);
+        $this->inflector->setStaticRuleReference('context', $this->_context);
         $this->inflector->addFilterRule('controller', array('Alpha', 'StringToLower'));
         $rules = $this->inflector->getRules('controller');
         $this->assertEquals(5, count($rules));

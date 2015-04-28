@@ -3,7 +3,7 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
@@ -126,6 +126,9 @@ class PhpCodeTest extends \PHPUnit_Framework_TestCase
 
     public function testUnserializeInvalid()
     {
+        if (version_compare(PHP_VERSION, '7', 'ge')) {
+            $this->markTestSkipped('Cannot catch parse errors in PHP 7+');
+        }
         $value = 'not a serialized string';
 
         $this->setExpectedException('Zend\Serializer\Exception\RuntimeException', 'syntax error');

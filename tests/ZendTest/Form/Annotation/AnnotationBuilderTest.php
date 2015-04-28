@@ -3,7 +3,7 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
@@ -11,6 +11,7 @@ namespace ZendTest\Form\Annotation;
 
 use PHPUnit_Framework_TestCase as TestCase;
 use Zend\Form\Annotation;
+use Zend\Form\Element\Collection;
 use ZendTest\Form\TestAsset;
 
 class AnnotationBuilderTest extends TestCase
@@ -40,7 +41,10 @@ class AnnotationBuilderTest extends TestCase
         $password = $form->get('password');
         $this->assertInstanceOf('Zend\Form\Element', $password);
         $attributes = $password->getAttributes();
-        $this->assertEquals(array('type' => 'password', 'label' => 'Enter your password', 'name' => 'password'), $attributes);
+        $this->assertEquals(
+            array('type' => 'password', 'label' => 'Enter your password', 'name' => 'password'),
+            $attributes
+        );
         $this->assertNull($password->getAttribute('required'));
 
         $filter = $form->getInputFilter();
@@ -106,8 +110,34 @@ class AnnotationBuilderTest extends TestCase
         $test  = $form->getIterator()->getIterator()->current();
         $this->assertSame($email, $test, 'Test is element ' . $test->getName());
 
+        $test  = $form->getIterator()->current();
+        $this->assertSame($email, $test, 'Test is element ' . $test->getName());
+
         $hydrator = $form->getHydrator();
         $this->assertInstanceOf('Zend\Stdlib\Hydrator\ObjectProperty', $hydrator);
+    }
+
+    public function testFieldsetOrder()
+    {
+        $entity  = new TestAsset\Annotation\FieldsetOrderEntity();
+        $builder = new Annotation\AnnotationBuilder();
+        $form    = $builder->createForm($entity);
+
+        $element = $form->get('element');
+        $first  = $form->getIterator()->getIterator()->current();
+        $this->assertSame($element, $first, 'Test is element ' . $first->getName());
+    }
+
+    public function testFieldsetOrderWithPreserve()
+    {
+        $entity  = new TestAsset\Annotation\FieldsetOrderEntity();
+        $builder = new Annotation\AnnotationBuilder();
+        $builder->setPreserveDefinedOrder(true);
+        $form    = $builder->createForm($entity);
+
+        $fieldset = $form->get('fieldset');
+        $first  = $form->getIterator()->getIterator()->current();
+        $this->assertSame($fieldset, $first, 'Test is element ' . $first->getName());
     }
 
     public function testCanRetrieveOnlyFormSpecification()
@@ -168,6 +198,79 @@ class AnnotationBuilderTest extends TestCase
         $this->assertTrue($composed->has('password'));
     }
 
+    public function testAllowsComposingMultipleChildEntities()
+    {
+        $entity  = new TestAsset\Annotation\EntityComposingMultipleEntities();
+        $builder = new Annotation\AnnotationBuilder();
+        $form    = $builder->createForm($entity);
+
+        $this->assertTrue($form->has('composed'));
+        $composed = $form->get('composed');
+
+        $this->assertInstanceOf('Zend\Form\Element\Collection', $composed);
+        $target = $composed->getTargetElement();
+        $this->assertInstanceOf('Zend\Form\FieldsetInterface', $target);
+        $this->assertTrue($target->has('username'));
+        $this->assertTrue($target->has('password'));
+    }
+
+    /**
+     * @dataProvider provideOptionsAnnotationAndComposedObjectAnnotation
+     * @param string $childName
+     *
+     * @group 7108
+     */
+    public function testOptionsAnnotationAndComposedObjectAnnotation($childName)
+    {
+        $entity  = new TestAsset\Annotation\EntityUsingComposedObjectAndOptions();
+        $builder = new Annotation\AnnotationBuilder();
+        $form    = $builder->createForm($entity);
+
+        $child = $form->get($childName);
+
+        $target = $child->getTargetElement();
+        $this->assertInstanceOf('Zend\Form\FieldsetInterface', $target);
+        $this->assertEquals('My label', $child->getLabel());
+    }
+
+    /**
+     * Data provider
+     *
+     * @return string[][]
+     */
+    public function provideOptionsAnnotationAndComposedObjectAnnotation()
+    {
+        return array(array('child'), array('childTheSecond'));
+    }
+
+    /**
+     * @dataProvider provideOptionsAnnotationAndComposedObjectAnnotationNoneCollection
+     * @param string $childName
+     *
+     * @group 7108
+     */
+    public function testOptionsAnnotationAndComposedObjectAnnotationNoneCollection($childName)
+    {
+        $entity  = new TestAsset\Annotation\EntityUsingComposedObjectAndOptions();
+        $builder = new Annotation\AnnotationBuilder();
+        $form    = $builder->createForm($entity);
+
+        $child = $form->get($childName);
+
+        $this->assertInstanceOf('Zend\Form\FieldsetInterface', $child);
+        $this->assertEquals('My label', $child->getLabel());
+    }
+
+    /**
+     * Data provider
+     *
+     * @return string[][]
+     */
+    public function provideOptionsAnnotationAndComposedObjectAnnotationNoneCollection()
+    {
+        return array(array('childTheThird'), array('childTheFourth'));
+    }
+
     public function testCanHandleOptionsAnnotation()
     {
         $entity  = new TestAsset\Annotation\EntityUsingOptions();
@@ -218,6 +321,17 @@ class AnnotationBuilderTest extends TestCase
         $this->assertTrue($sampleinput->allowEmpty());
     }
 
+    public function testContinueIfEmptyInput()
+    {
+        $entity  = new TestAsset\Annotation\SampleEntity();
+        $builder = new Annotation\AnnotationBuilder();
+        $form    = $builder->createForm($entity);
+
+        $inputFilter = $form->getInputFilter();
+        $sampleinput = $inputFilter->get('sampleinput');
+        $this->assertTrue($sampleinput->continueIfEmpty());
+    }
+
     public function testInputNotRequiredByDefault()
     {
         $entity = new TestAsset\Annotation\SampleEntity();
@@ -230,16 +344,41 @@ class AnnotationBuilderTest extends TestCase
 
     public function testObjectElementAnnotation()
     {
+        if (version_compare(PHP_VERSION, '7.0', '>=')) {
+            $this->markTestSkipped('Cannot test Object annotation in PHP 7; object is a reserved keyword');
+        }
+
         $entity = new TestAsset\Annotation\EntityUsingObjectProperty();
+        $builder = new Annotation\AnnotationBuilder();
+
+        $phpunit = $this;
+        set_error_handler(function ($code, $message) use ($phpunit) {
+            $phpunit->assertEquals(E_USER_DEPRECATED, $code);
+        }, E_USER_DEPRECATED);
+        $form = $builder->createForm($entity);
+        restore_error_handler();
+
+        $fieldset = $form->get('object');
+        /* @var $fieldset Zend\Form\Fieldset */
+
+        $this->assertInstanceOf('Zend\Form\Fieldset', $fieldset);
+        $this->assertInstanceOf('ZendTest\Form\TestAsset\Annotation\Entity', $fieldset->getObject());
+        $this->assertInstanceOf("Zend\Stdlib\Hydrator\ClassMethods", $fieldset->getHydrator());
+        $this->assertFalse($fieldset->getHydrator()->getUnderscoreSeparatedKeys());
+    }
+
+    public function testInstanceElementAnnotation()
+    {
+        $entity = new TestAsset\Annotation\EntityUsingInstanceProperty();
         $builder = new Annotation\AnnotationBuilder();
         $form = $builder->createForm($entity);
 
         $fieldset = $form->get('object');
         /* @var $fieldset Zend\Form\Fieldset */
 
-        $this->assertInstanceOf('Zend\Form\Fieldset',$fieldset);
-        $this->assertInstanceOf('ZendTest\Form\TestAsset\Annotation\Entity',$fieldset->getObject());
-        $this->assertInstanceOf("Zend\Stdlib\Hydrator\ClassMethods",$fieldset->getHydrator());
+        $this->assertInstanceOf('Zend\Form\Fieldset', $fieldset);
+        $this->assertInstanceOf('ZendTest\Form\TestAsset\Annotation\Entity', $fieldset->getObject());
+        $this->assertInstanceOf("Zend\Stdlib\Hydrator\ClassMethods", $fieldset->getHydrator());
         $this->assertFalse($fieldset->getHydrator()->getUnderscoreSeparatedKeys());
     }
 
@@ -251,12 +390,24 @@ class AnnotationBuilderTest extends TestCase
         $inputFilter = $form->getInputFilter();
 
         $this->assertTrue($inputFilter->has('input'));
-        foreach (
-            array('Zend\InputFilter\InputInterface', 'ZendTest\Form\TestAsset\Annotation\InputFilterInput') as
-            $expectedInstance
-        ) {
+        $expected = array(
+            'Zend\InputFilter\InputInterface',
+            'ZendTest\Form\TestAsset\Annotation\InputFilterInput',
+        );
+        foreach ($expected as $expectedInstance) {
             $this->assertInstanceOf($expectedInstance, $inputFilter->get('input'));
         }
+    }
 
+    /**
+     * @group 6753
+     */
+    public function testInputFilterAnnotationAllowsComposition()
+    {
+        $entity = new TestAsset\Annotation\EntityWithInputFilterAnnotation();
+        $builder = new Annotation\AnnotationBuilder();
+        $form = $builder->createForm($entity);
+        $inputFilter = $form->getInputFilter();
+        $this->assertCount(2, $inputFilter->get('username')->getValidatorChain());
     }
 }

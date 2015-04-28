@@ -3,19 +3,18 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
 namespace ZendTest\View\Helper;
 
-use Zend\View\Helper\Placeholder\Registry as PlaceholderRegistry;
 use Zend\View\Helper;
 use Zend\View\Renderer\PhpRenderer as View;
 use Zend\View\Exception\ExceptionInterface as ViewException;
 
 /**
- * Test class for Zend_View_Helper_HeadLink.
+ * Test class for Zend\View\Helper\HeadLink.
  *
  * @group      Zend_View
  * @group      Zend_View_Helper
@@ -23,7 +22,7 @@ use Zend\View\Exception\ExceptionInterface as ViewException;
 class HeadLinkTest extends \PHPUnit_Framework_TestCase
 {
     /**
-     * @var Zend_View_Helper_HeadLink
+     * @var Helper\HeadLink
      */
     public $helper;
 
@@ -273,16 +272,44 @@ class HeadLinkTest extends \PHPUnit_Framework_TestCase
         $this->assertContains('<![endif]-->', $string);
     }
 
+    public function testConditionalStylesheetCreationNoIE()
+    {
+        $this->helper->setStylesheet('/styles.css', 'screen', '!IE');
+        $item = $this->helper->getValue();
+        $this->assertObjectHasAttribute('conditionalStylesheet', $item);
+        $this->assertEquals('!IE', $item->conditionalStylesheet);
+
+        $string = $this->helper->toString();
+        $this->assertContains('/styles.css', $string);
+        $this->assertContains('<!--[if !IE]><!--><', $string);
+        $this->assertContains('<!--<![endif]-->', $string);
+    }
+
+    public function testConditionalStylesheetCreationNoIEWidthSpaces()
+    {
+        $this->helper->setStylesheet('/styles.css', 'screen', '! IE');
+        $item = $this->helper->getValue();
+        $this->assertObjectHasAttribute('conditionalStylesheet', $item);
+        $this->assertEquals('! IE', $item->conditionalStylesheet);
+
+        $string = $this->helper->toString();
+        $this->assertContains('/styles.css', $string);
+        $this->assertContains('<!--[if ! IE]><!--><', $string);
+        $this->assertContains('<!--<![endif]-->', $string);
+    }
+
     public function testSettingAlternateWithTooFewArgsRaisesException()
     {
         try {
             $this->helper->setAlternate('foo');
             $this->fail('Setting alternate with fewer than 3 args should raise exception');
-        } catch (ViewException $e) { }
+        } catch (ViewException $e) {
+        }
         try {
             $this->helper->setAlternate('foo', 'bar');
             $this->fail('Setting alternate with fewer than 3 args should raise exception');
-        } catch (ViewException $e) { }
+        } catch (ViewException $e) {
+        }
     }
 
     public function testIndentationIsHonored()
@@ -346,7 +373,7 @@ class HeadLinkTest extends \PHPUnit_Framework_TestCase
 
     public function testSetAlternateWithExtras()
     {
-        $this->helper->setAlternate('/mydocument.pdf', 'application/pdf', 'foo', array('media' => array('print','screen')));
+        $this->helper->setAlternate('/mydocument.pdf', 'application/pdf', 'foo', array('media' => array('print', 'screen')));
         $test = $this->helper->toString();
         $this->assertContains('media="print,screen"', $test);
     }
@@ -360,7 +387,7 @@ class HeadLinkTest extends \PHPUnit_Framework_TestCase
 
     public function testSetStylesheetWithMediaAsArray()
     {
-        $this->helper->appendStylesheet('/bar/baz', array('screen','print'));
+        $this->helper->appendStylesheet('/bar/baz', array('screen', 'print'));
         $test = $this->helper->toString();
         $this->assertContains(' media="screen,print"', $test);
     }
@@ -386,10 +413,10 @@ class HeadLinkTest extends \PHPUnit_Framework_TestCase
      */
     public function testContainerMaintainsCorrectOrderOfItems()
     {
-        $this->helper->__invoke()->offsetSetStylesheet(1,'/test1.css');
-        $this->helper->__invoke()->offsetSetStylesheet(10,'/test2.css');
-        $this->helper->__invoke()->offsetSetStylesheet(20,'/test3.css');
-        $this->helper->__invoke()->offsetSetStylesheet(5,'/test4.css');
+        $this->helper->__invoke()->offsetSetStylesheet(1, '/test1.css');
+        $this->helper->__invoke()->offsetSetStylesheet(10, '/test2.css');
+        $this->helper->__invoke()->offsetSetStylesheet(20, '/test3.css');
+        $this->helper->__invoke()->offsetSetStylesheet(5, '/test4.css');
 
         $test = $this->helper->toString();
 
@@ -408,5 +435,14 @@ class HeadLinkTest extends \PHPUnit_Framework_TestCase
     {
         $this->helper->appendStylesheet(array('href' => '/bar/baz', 'id' => 'foo'));
         $this->assertContains('id="foo"', $this->helper->toString());
+    }
+
+    /**
+     * @group 6635
+     */
+    public function testSizesAttributeIsSupported()
+    {
+        $this->helper->appendStylesheet(array('rel' => 'icon', 'href' => '/bar/baz', 'sizes' => '123x456'));
+        $this->assertContains('sizes="123x456"', $this->helper->toString());
     }
 }

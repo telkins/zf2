@@ -3,7 +3,7 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright  Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright  Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license    http://framework.zend.com/license/new-bsd     New BSD License
  */
 
@@ -21,6 +21,10 @@ return array(
     "Invalid type given. String expected" => "Type invalide. Chaîne attendue",
     "The input contains non alphabetic characters" => "L'entrée contient des caractères non alphabétiques",
     "The input is an empty string" => "L'entrée est une chaîne vide",
+
+    // Zend\I18n\Validator\DateTime
+    "Invalid type given. String expected" => "Type invalide. Chaîne attendue",
+    "The input does not appear to be a valid datetime" => "L'entrée ne semble pas être une date/heure valide",
 
     // Zend\I18n\Validator\Float
     "Invalid type given. String, integer or float expected" => "Type invalide. Chaîne, entier ou flottant attendu",

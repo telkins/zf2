@@ -3,7 +3,7 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
@@ -173,7 +173,7 @@ class MaildirFolderTest extends \PHPUnit_Framework_TestCase
         $this->markTestIncomplete("Fail");
         $mail = new Folder\Maildir($this->_params);
         $iterator = new \RecursiveIteratorIterator($mail->getFolders(), \RecursiveIteratorIterator::SELF_FIRST);
-        // we search for this folder because we can't assume a order while iterating
+        // we search for this folder because we can't assume an order while iterating
         $search_folders = array('subfolder'      => 'subfolder',
                                 'subfolder.test' => 'test',
                                 'INBOX'          => 'INBOX');
@@ -196,7 +196,7 @@ class MaildirFolderTest extends \PHPUnit_Framework_TestCase
         $this->markTestIncomplete("Fail");
         $mail = new Folder\Maildir($this->_params);
         $iterator = new \RecursiveIteratorIterator($mail->getFolders(), \RecursiveIteratorIterator::SELF_FIRST);
-        // we search for this folder because we can't assume a order while iterating
+        // we search for this folder because we can't assume an order while iterating
         $search_folders = array('subfolder'      => 'subfolder',
                                 'subfolder.test' => 'test',
                                 'INBOX'          => 'INBOX');
@@ -219,7 +219,7 @@ class MaildirFolderTest extends \PHPUnit_Framework_TestCase
         $this->markTestIncomplete("Fail");
         $mail = new Folder\Maildir($this->_params);
         $iterator = new \RecursiveIteratorIterator($mail->getFolders('INBOX.subfolder'), \RecursiveIteratorIterator::SELF_FIRST);
-        // we search for this folder because we can't assume a order while iterating
+        // we search for this folder because we can't assume an order while iterating
         $search_folders = array('subfolder.test' => 'test');
         $found_folders = array();
 
@@ -310,7 +310,7 @@ class MaildirFolderTest extends \PHPUnit_Framework_TestCase
         chmod($this->_params['dirname'] . '.subfolder', $stat['mode']);
 
         if (!$check) {
-           $this->fail('no exception while loading invalid dir with subfolder not readable');
+            $this->fail('no exception while loading invalid dir with subfolder not readable');
         }
     }
 
@@ -337,7 +337,7 @@ class MaildirFolderTest extends \PHPUnit_Framework_TestCase
         chmod($this->_params['dirname'], $stat['mode']);
 
         if (!$check) {
-           $this->fail('no exception while loading not readable maildir');
+            $this->fail('no exception while loading not readable maildir');
         }
     }
 

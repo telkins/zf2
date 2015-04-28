@@ -3,7 +3,7 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
@@ -14,7 +14,6 @@ use Zend\Stdlib\ArrayObject;
 
 class ArrayObjectTest extends TestCase
 {
-
     public function testConstructorDefaults()
     {
         $ar = new ArrayObject();
@@ -52,9 +51,6 @@ class ArrayObjectTest extends TestCase
 
     public function testStdPropListCannotAccessObjectVars()
     {
-        if (version_compare(PHP_VERSION, '5.3.4') < 0) {
-            $this->markTestSkipped('Behavior is for overwritten ArrayObject in greater than 5.3.3');
-        }
         $this->setExpectedException('InvalidArgumentException');
         $ar = new ArrayObject();
         $ar->flag;
@@ -206,9 +202,6 @@ class ArrayObjectTest extends TestCase
 
     public function testInvalidIteratorClassThrowsInvalidArgumentException()
     {
-        if (version_compare(PHP_VERSION, '5.3.4') < 0) {
-            $this->markTestSkipped('Behavior is for overwritten ArrayObject in greater than 5.3.3');
-        }
         $this->setExpectedException('InvalidArgumentException');
         $ar = new ArrayObject(array(), ArrayObject::STD_PROP_LIST, 'InvalidArrayIterator');
     }
@@ -254,9 +247,6 @@ class ArrayObjectTest extends TestCase
 
     public function testOffsetExistsThrowsExceptionOnProtectedProperty()
     {
-        if (version_compare(PHP_VERSION, '5.3.4') < 0) {
-            $this->markTestSkipped('Behavior is for overwritten ArrayObject in greater than 5.3.3');
-        }
         $this->setExpectedException('InvalidArgumentException');
         $ar = new ArrayObject();
         isset($ar->protectedProperties);
@@ -276,9 +266,6 @@ class ArrayObjectTest extends TestCase
 
     public function testOffsetGetThrowsExceptionOnProtectedProperty()
     {
-        if (version_compare(PHP_VERSION, '5.3.4') < 0) {
-            $this->markTestSkipped('Behavior is for overwritten ArrayObject in greater than 5.3.3');
-        }
         $this->setExpectedException('InvalidArgumentException');
         $ar = new ArrayObject();
         $ar->protectedProperties;
@@ -286,9 +273,6 @@ class ArrayObjectTest extends TestCase
 
     public function testOffsetSetThrowsExceptionOnProtectedProperty()
     {
-        if (version_compare(PHP_VERSION, '5.3.4') < 0) {
-            $this->markTestSkipped('Behavior is for overwritten ArrayObject in greater than 5.3.3');
-        }
         $this->setExpectedException('InvalidArgumentException');
         $ar = new ArrayObject();
         $ar->protectedProperties = null;
@@ -308,9 +292,6 @@ class ArrayObjectTest extends TestCase
 
     public function testOffsetUnsetMultidimensional()
     {
-        if (version_compare(PHP_VERSION, '5.3.4') < 0) {
-            $this->markTestSkipped('Behavior is for overwritten ArrayObject in greater than 5.3.3');
-        }
         $ar = new ArrayObject();
         $ar['foo'] = array('bar' => array('baz' => 'boo'));
         unset($ar['foo']['bar']['baz']);
@@ -318,9 +299,6 @@ class ArrayObjectTest extends TestCase
 
     public function testOffsetUnsetThrowsExceptionOnProtectedProperty()
     {
-        if (version_compare(PHP_VERSION, '5.3.4') < 0) {
-            $this->markTestSkipped('Behavior is for overwritten ArrayObject in greater than 5.3.3');
-        }
         $this->setExpectedException('InvalidArgumentException');
         $ar = new ArrayObject();
         unset($ar->protectedProperties);
@@ -372,4 +350,15 @@ class ArrayObjectTest extends TestCase
         $this->assertSame($sorted, $ar->getArrayCopy());
     }
 
+    /**
+     * @group 6089
+     */
+    public function testSerializationRestoresProperties()
+    {
+        $ar        = new ArrayObject();
+        $ar->foo   = 'bar';
+        $ar['bar'] = 'foo';
+
+        $this->assertEquals($ar, unserialize(serialize($ar)));
+    }
 }

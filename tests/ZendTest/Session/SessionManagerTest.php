@@ -3,7 +3,7 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
@@ -11,6 +11,7 @@ namespace ZendTest\Session;
 
 use Zend\Session\SessionManager;
 use Zend\Session;
+use Zend\Session\Validator\RemoteAddr;
 
 /**
  * @group      Zend_Session
@@ -22,6 +23,9 @@ class SessionManagerTest extends \PHPUnit_Framework_TestCase
 
     public $cookieDateFormat = 'D, d-M-y H:i:s e';
 
+    /**
+     * @var SessionManager
+     */
     protected $manager;
 
     public function setUp()
@@ -84,6 +88,16 @@ class SessionManagerTest extends \PHPUnit_Framework_TestCase
         $saveHandler = new TestAsset\TestSaveHandler();
         $manager = new SessionManager(null, null, $saveHandler);
         $this->assertSame($saveHandler, $manager->getSaveHandler());
+    }
+
+    public function testCanPassValidatorsToConstructor()
+    {
+        $validators = array(
+            'foo',
+            'bar',
+        );
+        $manager = new SessionManager(null, null, null, $validators);
+        $this->assertAttributeEquals($validators, 'validators', $manager);
     }
 
     // Session-related functionality
@@ -535,4 +549,97 @@ class SessionManagerTest extends \PHPUnit_Framework_TestCase
         $this->assertSame($_SESSION['__ZF'], $metaData);
     }
 
+    /**
+     * @runInSeparateProcess
+     */
+    public function testSessionValidationDoesNotHaltOnNoopListener()
+    {
+        $validator = $this->getMock('stdClass', array('__invoke'));
+
+        $validator->expects($this->once())->method('__invoke');
+
+        $this->manager->getValidatorChain()->attach('session.validate', $validator);
+
+        $this->assertTrue($this->manager->isValid());
+    }
+
+    /**
+     * @runInSeparateProcess
+     */
+    public function testProducedSessionManagerWillNotReplaceSessionSuperGlobalValues()
+    {
+        $_SESSION['foo'] = 'bar';
+
+        $this->manager->start();
+
+        $this->assertArrayHasKey('foo', $_SESSION);
+        $this->assertSame('bar', $_SESSION['foo']);
+    }
+
+    /**
+     * @runInSeparateProcess
+     */
+    public function testValidatorChainSessionMetadataIsPreserved()
+    {
+        $this
+            ->manager
+            ->getValidatorChain()
+            ->attach('session.validate', array(new RemoteAddr(), 'isValid'));
+
+        $this->assertFalse($this->manager->sessionExists());
+
+        $this->manager->start();
+
+        $this->assertSame(
+            array(
+                'Zend\Session\Validator\RemoteAddr' => '',
+            ),
+            $_SESSION['__ZF']['_VALID']
+        );
+    }
+
+    /**
+     * @runInSeparateProcess
+     */
+    public function testRemoteAddressValidationWillFailOnInvalidAddress()
+    {
+        $this
+            ->manager
+            ->getValidatorChain()
+            ->attach('session.validate', array(new RemoteAddr('123.123.123.123'), 'isValid'));
+
+        $this->setExpectedException('Zend\Session\Exception\RuntimeException', 'Session validation failed');
+        $this->manager->start();
+    }
+
+    /**
+     * @runInSeparateProcess
+     */
+    public function testRemoteAddressValidationWillSucceedWithValidPreSetData()
+    {
+        $_SESSION = array(
+            '__ZF' => array(
+                '_VALID' => array('Zend\Session\Validator\RemoteAddr' => ''),
+            ),
+        );
+
+        $this->manager->start();
+
+        $this->assertTrue($this->manager->isValid());
+    }
+
+    /**
+     * @runInSeparateProcess
+     */
+    public function testRemoteAddressValidationWillFailWithInvalidPreSetData()
+    {
+        $_SESSION = array(
+            '__ZF' => array(
+                '_VALID' => array('Zend\Session\Validator\RemoteAddr' => '123.123.123.123'),
+            ),
+        );
+
+        $this->setExpectedException('Zend\Session\Exception\RuntimeException', 'Session validation failed');
+        $this->manager->start();
+    }
 }

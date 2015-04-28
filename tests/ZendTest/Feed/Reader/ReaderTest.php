@@ -3,7 +3,7 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
@@ -20,7 +20,6 @@ use Zend\Feed\Reader;
 */
 class ReaderTest extends \PHPUnit_Framework_TestCase
 {
-
     protected $feedSamplePath = null;
 
     public function setup()
@@ -256,14 +255,20 @@ class ReaderTest extends \PHPUnit_Framework_TestCase
     {
         require_once __DIR__ . '/_files/My/Extension/JungleBooks/Entry.php';
         require_once __DIR__ . '/_files/My/Extension/JungleBooks/Feed.php';
-        $manager = Reader\Reader::getExtensionManager();
+        $manager = new Reader\ExtensionManager(new Reader\ExtensionPluginManager());
         $manager->setInvokableClass('JungleBooks\Entry', 'My\Extension\JungleBooks\Entry');
         $manager->setInvokableClass('JungleBooks\Feed', 'My\Extension\JungleBooks\Feed');
+        Reader\Reader::setExtensionManager($manager);
         Reader\Reader::registerExtension('JungleBooks');
 
         $this->assertTrue(Reader\Reader::isRegistered('JungleBooks'));
     }
 
+    /**
+     * This test is failing on windows:
+     * Failed asserting that exception of type "Zend\Feed\Reader\Exception\RuntimeException" matches expected exception "Zend\Feed\Reader\Exception\InvalidArgumentException". Message was: "DOMDocument cannot parse XML: Entity 'discloseInfo' failed to parse".
+     * @todo why is the assertEquals commented out?
+     */
     public function testXxePreventionOnFeedParsing()
     {
         $this->setExpectedException('Zend\Feed\Reader\Exception\InvalidArgumentException');
@@ -297,6 +302,13 @@ class ReaderTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals(Reader\Reader::TYPE_RSS_20, $type);
     }
 
+    public function testImportStringMethodThrowProperExceptionOnEmptyString()
+    {
+        $this->setExpectedException('Zend\Feed\Reader\Exception\InvalidArgumentException');
+        $string = ' ';
+        $feed = Reader\Reader::importString($string);
+    }
+
     protected function _getTempDirectory()
     {
         $tmpdir = array();
@@ -320,7 +332,7 @@ class ReaderTest extends \PHPUnit_Framework_TestCase
                 return $dir;
             }
         }
-        $tempFile = tempnam(md5(uniqid(rand(), TRUE)), '');
+        $tempFile = tempnam(md5(uniqid(rand(), true)), '');
         if ($tempFile) {
             $dir = realpath(dirname($tempFile));
             unlink($tempFile);
@@ -340,5 +352,4 @@ class ReaderTest extends \PHPUnit_Framework_TestCase
     {
         return (is_readable($dir) && is_writable($dir));
     }
-
 }

@@ -3,7 +3,7 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
@@ -459,7 +459,29 @@ class JsonTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('{"firstName":"John","lastName":"Doe","email":"john@doe.com"}', $result);
     }
 
-     /**
+    public function testJsonSerializableWithBuiltinImplementation()
+    {
+        if (version_compare(PHP_VERSION, '5.4.0', 'lt')) {
+            $this->markTestSkipped('JsonSerializable does not exist in PHP <5.4.0.');
+        }
+
+        $encoded = Json\Encoder::encode(
+            new TestAsset\JsonSerializableBuiltinImpl()
+        );
+
+        $this->assertEquals('["jsonSerialize"]', $encoded);
+    }
+
+    public function testJsonSerializableWithZFImplementation()
+    {
+        $encoded = Json\Encoder::encode(
+            new TestAsset\JsonSerializableZFImpl()
+        );
+
+        $this->assertEquals('["jsonSerialize"]', $encoded);
+    }
+
+    /**
      * test encoding array with Zend_JSON_Expr
      *
      * @group ZF-4946
@@ -531,7 +553,7 @@ class JsonTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * Regression tests for Zend_JSON_Expr and mutliple keys with the same name.
+     * Regression tests for Zend\Json\Expr and multiple keys with the same name.
      *
      * @group ZF-4946
      */
@@ -539,12 +561,12 @@ class JsonTest extends \PHPUnit_Framework_TestCase
     {
         $data = array(
             0 => array(
-                "alpha" => new Json\Expr("function() {}"),
+                "alpha" => new Json\Expr("function () {}"),
                 "beta"  => "gamma",
             ),
             1 => array(
                 "alpha" => "gamma",
-                "beta"  => new Json\Expr("function() {}"),
+                "beta"  => new Json\Expr("function () {}"),
             ),
             2 => array(
                 "alpha" => "gamma",
@@ -554,13 +576,13 @@ class JsonTest extends \PHPUnit_Framework_TestCase
         $result = Json\Json::encode($data, false, array('enableJsonExprFinder' => true));
 
         $this->assertEquals(
-            '[{"alpha":function() {},"beta":"gamma"},{"alpha":"gamma","beta":function() {}},{"alpha":"gamma","beta":"gamma"}]',
+            '[{"alpha":function () {},"beta":"gamma"},{"alpha":"gamma","beta":function () {}},{"alpha":"gamma","beta":"gamma"}]',
             $result
         );
     }
 
     /**
-     * Regression tests for Zend_JSON_Expr and mutliple keys with the same name.
+     * Regression tests for Zend\Json\Expr and multiple keys with the same name.
      *
      * @group ZF-4946
      */
@@ -594,7 +616,7 @@ class JsonTest extends \PHPUnit_Framework_TestCase
 
         $data = array(
             0 => array(
-                "alpha" => new Json\Expr("function() {}"),
+                "alpha" => new Json\Expr("function () {}"),
                 "beta"  => "gamma",
             ),
         );
@@ -845,24 +867,107 @@ class JsonTest extends \PHPUnit_Framework_TestCase
                 'far'=>'boo',
                 'faz'=>array(
                     'obj'=>$o
-                )
+                ),
+                'fay'=>array('foo', 'bar')
             )
         );
         $pretty = Json\Json::prettyPrint(Json\Json::encode($test), array("indent"  => " "));
         $expected = <<<EOB
 {
- "simple":"simple test string",
- "stringwithjsonchars":"\\\\\\u0022[1,2]",
- "complex":{
-  "foo":"bar",
-  "far":"boo",
-  "faz":{
-   "obj":{
-    "test":1,
-    "faz":"fubar"
+ "simple": "simple test string",
+ "stringwithjsonchars": "\\\\\\u0022[1,2]",
+ "complex": {
+  "foo": "bar",
+  "far": "boo",
+  "faz": {
+   "obj": {
+    "test": 1,
+    "faz": "fubar"
+   }
+  },
+  "fay": [
+   "foo",
+   "bar"
+  ]
+ }
+}
+EOB;
+        $this->assertSame($expected, $pretty);
+    }
+
+    public function testPrettyPrintDoublequoteFollowingEscapedBackslashShouldNotBeTreatedAsEscaped()
+    {
+        $this->assertEquals(
+            "[\n    1,\n    \"\\\\\",\n    3\n]",
+            Json\Json::prettyPrint(Json\Json::encode(array(1, '\\', 3)))
+        );
+
+        $this->assertEquals(
+            "{\n    \"a\": \"\\\\\"\n}",
+           Json\Json::prettyPrint(Json\Json::encode(array('a' => '\\')))
+        );
+    }
+
+    public function testPrettyPrintRePrettyPrint()
+    {
+        $expected = <<<EOB
+{
+ "simple": "simple test string",
+ "stringwithjsonchars": "\\\\\\u0022[1,2]",
+ "complex": {
+  "foo": "bar",
+  "far": "boo",
+  "faz": {
+   "obj": {
+    "test": 1,
+    "faz": "fubar"
    }
   }
  }
+}
+EOB;
+
+        $this->assertSame(
+            $expected,
+            Json\Json::prettyPrint($expected, array("indent"  => " "))
+        );
+    }
+
+    public function testEncodeWithPrettyPrint()
+    {
+        $o = new \stdClass();
+        $o->test = 1;
+        $o->faz = 'fubar';
+
+        // The escaped double-quote in item 'stringwithjsonchars' ensures that
+        // escaped double-quotes don't throw off prettyPrint's string literal detection
+        $test = array(
+            'simple'=>'simple test string',
+            'stringwithjsonchars'=>'\"[1,2]',
+            'complex'=>array(
+                'foo'=>'bar',
+                'far'=>'boo',
+                'faz'=>array(
+                    'obj'=>$o
+                )
+            )
+        );
+        $pretty = Json\Json::encode($test, false, array("prettyPrint" => true));
+
+        $expected = <<<EOB
+{
+    "simple": "simple test string",
+    "stringwithjsonchars": "\\\\\\u0022[1,2]",
+    "complex": {
+        "foo": "bar",
+        "far": "boo",
+        "faz": {
+            "obj": {
+                "test": 1,
+                "faz": "fubar"
+            }
+        }
+    }
 }
 EOB;
         $this->assertSame($expected, $pretty);
@@ -916,7 +1021,6 @@ EOB;
         $this->assertTrue(isset($object->_empty_));
         $this->assertEquals('test', $object->_empty_);
     }
-
 }
 
 /**

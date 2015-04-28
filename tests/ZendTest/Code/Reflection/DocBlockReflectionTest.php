@@ -3,7 +3,7 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
@@ -13,7 +13,7 @@ use Zend\Code\Reflection\ClassReflection;
 use Zend\Code\Reflection\DocBlockReflection;
 
 /**
- * @copyright  Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright  Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license    http://framework.zend.com/license/new-bsd     New BSD License
  * @group      Zend_Reflection
  * @group      Zend_Reflection_DocBlock
@@ -33,7 +33,6 @@ class DocBlockReflectionTest extends \PHPUnit_Framework_TestCase
 
 
         $this->assertEquals($expectedOutput, $classReflection->getDocBlock()->getLongDescription());
-
     }
 
     public function testDocBlockTags()
@@ -58,8 +57,20 @@ class DocBlockReflectionTest extends \PHPUnit_Framework_TestCase
         $returnTag = $classReflection->getMethod('doSomething')->getDocBlock()->getTag('return');
         $this->assertInstanceOf('Zend\Code\Reflection\DocBlock\Tag\TagInterface', $returnTag);
         $this->assertEquals('mixed', $returnTag->getType());
+    }
 
+    public function testShortDocBlocks()
+    {
+        $classReflection = new ClassReflection('ZendTest\Code\Reflection\TestAsset\TestSampleClass13');
+        $this->assertEquals(0, count($classReflection->getDocBlock()->getTags()));
 
+        $this->assertSame('Short Method Description', $classReflection->getMethod('doSomething')->getDocBlock()->getShortDescription());
+        $this->assertSame('Short Class Description', $classReflection->getDocBlock()->getShortDescription());
+
+        $returnTag = $classReflection->getMethod('returnSomething')->getDocBlock()->getTag('return');
+        $this->assertInstanceOf('Zend\Code\Reflection\DocBlock\Tag\TagInterface', $returnTag);
+        $this->assertEquals('Something', $returnTag->getType());
+        $this->assertEquals('This describes something', $returnTag->getDescription());
     }
 
     public function testTabbedDocBlockTags()
@@ -88,15 +99,12 @@ class DocBlockReflectionTest extends \PHPUnit_Framework_TestCase
 
     public function testDocBlockLines()
     {
-        //$this->markTestIncomplete('Line numbers incomplete');
-
         $classReflection = new ClassReflection('ZendTest\Code\Reflection\TestAsset\TestSampleClass5');
 
         $classDocBlock = $classReflection->getDocBlock();
 
         $this->assertEquals(5, $classDocBlock->getStartLine());
         $this->assertEquals(17, $classDocBlock->getEndLine());
-
     }
 
     public function testDocBlockContents()
@@ -121,7 +129,6 @@ now.
 EOS;
 
         $this->assertEquals($expectedContents, $classDocBlock->getContents());
-
     }
 
     public function testToString()

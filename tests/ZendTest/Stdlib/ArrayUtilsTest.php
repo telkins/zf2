@@ -3,17 +3,18 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
 namespace ZendTest\Stdlib;
 
+use ArrayObject;
 use PHPUnit_Framework_TestCase as TestCase;
 use stdClass;
-use ArrayObject;
-use Zend\Stdlib\ArrayUtils;
 use Zend\Config\Config;
+use Zend\Stdlib\ArrayUtils;
+use Zend\Stdlib\ArrayUtils\MergeRemoveKey;
 
 class ArrayUtilsTest extends TestCase
 {
@@ -143,20 +144,67 @@ class ArrayUtilsTest extends TestCase
     public static function mergeArrays()
     {
         return array(
-            'merge-integer-and-string keys' => array(
+            'merge-integer-and-string-keys' => array(
                 array(
                     'foo',
-                    3 => 'bar',
-                    'baz' => 'baz'
+                    3     => 'bar',
+                    'baz' => 'baz',
+                    4     => array(
+                        'a',
+                        1 => 'b',
+                        'c',
+                    ),
                 ),
                 array(
                     'baz',
+                    4 => array(
+                        'd' => 'd',
+                    ),
                 ),
+                false,
                 array(
                     0     => 'foo',
                     3     => 'bar',
                     'baz' => 'baz',
-                    4     => 'baz'
+                    4     => array(
+                        'a',
+                        1 => 'b',
+                        'c',
+                    ),
+                    5     => 'baz',
+                    6     => array(
+                        'd' => 'd',
+                    ),
+                )
+            ),
+            'merge-integer-and-string-keys-preserve-numeric' => array(
+                array(
+                    'foo',
+                    3     => 'bar',
+                    'baz' => 'baz',
+                    4     => array(
+                        'a',
+                        1 => 'b',
+                        'c',
+                    ),
+                ),
+                array(
+                    'baz',
+                    4 => array(
+                        'd' => 'd',
+                    ),
+                ),
+                true,
+                array(
+                    0     => 'baz',
+                    3     => 'bar',
+                    'baz' => 'baz',
+                    4 => array(
+                        'a',
+                        1 => 'b',
+                        'c',
+                        'd' => 'd',
+                    ),
                 )
             ),
             'merge-arrays-recursively' => array(
@@ -170,6 +218,7 @@ class ArrayUtilsTest extends TestCase
                         'baz'
                     )
                 ),
+                false,
                 array(
                     'foo' => array(
                         0 => 'baz',
@@ -186,12 +235,83 @@ class ArrayUtilsTest extends TestCase
                     'foo' => 'baz',
                     'bar' => 'bat'
                 ),
+                false,
                 array(
                     'foo' => 'baz',
                     'bar' => 'bat'
                 )
             ),
+            'merge-with-null' => array(
+                array(
+                    'foo' => null,
+                    null  => 'rod',
+                    'cat' => 'bar',
+                    'god' => 'rad'
+                ),
+                array(
+                    'foo' => 'baz',
+                    null  => 'zad',
+                    'god' => null
+                ),
+                false,
+                array(
+                    'foo' => 'baz',
+                    null  => 'zad',
+                    'cat' => 'bar',
+                    'god' => null
+                )
+            ),
         );
+    }
+
+    /**
+     * @group 6903
+     */
+    public function testMergeReplaceKey()
+    {
+        $expected = array(
+            'car' => array(
+                'met' => 'bet',
+            ),
+            'new' => array(
+                'foo' => 'get',
+            ),
+        );
+        $a = array(
+            'car' => array(
+                'boo' => 'foo',
+                'doo' => 'moo',
+            ),
+        );
+        $b = array(
+            'car' => new \Zend\Stdlib\ArrayUtils\MergeReplaceKey(array(
+                'met' => 'bet',
+            )),
+            'new' => new \Zend\Stdlib\ArrayUtils\MergeReplaceKey(array(
+                'foo' => 'get',
+            )),
+        );
+        $this->assertInstanceOf('Zend\Stdlib\ArrayUtils\MergeReplaceKeyInterface', $b['car']);
+        $this->assertEquals($expected, ArrayUtils::merge($a, $b));
+    }
+
+    /**
+     * @group 6899
+     */
+    public function testAllowsRemovingKeys()
+    {
+        $a = array(
+            'foo' => 'bar',
+            'bar' => 'bat'
+        );
+        $b = array(
+            'foo' => new MergeRemoveKey(),
+            'baz' => new MergeRemoveKey(),
+        );
+        $expected = array(
+            'bar' => 'bat'
+        );
+        $this->assertEquals($expected, ArrayUtils::merge($a, $b));
     }
 
     public static function validIterators()
@@ -340,9 +460,9 @@ class ArrayUtilsTest extends TestCase
     /**
      * @dataProvider mergeArrays
      */
-    public function testMerge($a, $b, $expected)
+    public function testMerge($a, $b, $preserveNumericKeys, $expected)
     {
-        $this->assertEquals($expected, ArrayUtils::merge($a, $b));
+        $this->assertEquals($expected, ArrayUtils::merge($a, $b, $preserveNumericKeys));
     }
 
     /**
@@ -361,5 +481,65 @@ class ArrayUtilsTest extends TestCase
     {
         $this->setExpectedException('Zend\Stdlib\Exception\InvalidArgumentException');
         $this->assertFalse(ArrayUtils::iteratorToArray($test));
+    }
+
+    public function filterArrays()
+    {
+        return array(
+            array(
+                array('foo' => 'bar', 'fiz' => 'buz'),
+                function ($value) {
+                    if ($value == 'bar') {
+                        return false;
+                    }
+                    return true;
+                },
+                null,
+                array('fiz' => 'buz')
+            ),
+            array(
+                array('foo' => 'bar', 'fiz' => 'buz'),
+                function ($value, $key) {
+                    if ($value == 'buz') {
+                        return false;
+                    }
+
+                    if ($key == 'foo') {
+                        return false;
+                    }
+
+                    return true;
+                },
+                ArrayUtils::ARRAY_FILTER_USE_BOTH,
+                array()
+            ),
+            array(
+                array('foo' => 'bar', 'fiz' => 'buz'),
+                function ($key) {
+                    if ($key == 'foo') {
+                        return false;
+                    }
+                    return true;
+                },
+                ArrayUtils::ARRAY_FILTER_USE_KEY,
+                array('fiz' => 'buz')
+            ),
+        );
+    }
+
+    /**
+     * @dataProvider filterArrays
+     */
+    public function testFiltersArray($data, $callback, $flag, $result)
+    {
+        $this->assertEquals($result, ArrayUtils::filter($data, $callback, $flag));
+    }
+
+    /**
+     * @expectedException \Zend\Stdlib\Exception\InvalidArgumentException
+     */
+    public function testInvalidCallableRaiseInvalidArgumentException()
+    {
+        ArrayUtils::filter(array(), "INVALID");
     }
 }

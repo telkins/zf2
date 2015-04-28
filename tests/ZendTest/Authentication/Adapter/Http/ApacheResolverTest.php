@@ -3,7 +3,7 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
@@ -15,7 +15,7 @@ use Zend\Authentication\Result as AuthResult;
 /**
  * @group      Zend_Auth
  */
-class ApacheTest extends \PHPUnit_Framework_TestCase
+class ApacheResolverTest extends \PHPUnit_Framework_TestCase
 {
     /**
      * Path to test files
@@ -39,11 +39,9 @@ class ApacheTest extends \PHPUnit_Framework_TestCase
     protected $_badPath;
 
     /**
-     * Resolver instance
-     *
-     * @var Zend_Auth_Adapter_Http_Resolver_File
+     * @var Apache
      */
-    protected $_resolver;
+    protected $_apache;
 
     /**
      * Sets the paths to files used in this test, and creates a shared resolver instance
@@ -111,7 +109,8 @@ class ApacheTest extends \PHPUnit_Framework_TestCase
             array( $path . '/htbasic.plaintext' ),
             array( $path . '/htbasic.md5' ),
             array( $path . '/htbasic.sha1' ),
-            array( $path . '/htbasic.crypt' )
+            array( $path . '/htbasic.crypt' ),
+            array( $path . '/htbasic.bcrypt' ),
         );
     }
 

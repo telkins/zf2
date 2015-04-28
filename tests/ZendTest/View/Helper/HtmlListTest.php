@@ -3,7 +3,7 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
@@ -19,7 +19,7 @@ use Zend\View\Renderer\PhpRenderer as View;
 class HtmlListTest extends \PHPUnit_Framework_TestCase
 {
     /**
-     * @var Zend_View_Helper_HtmlList
+     * @var Helper\HtmlList
      */
     public $helper;
 
@@ -185,7 +185,6 @@ class HtmlListTest extends \PHPUnit_Framework_TestCase
         foreach ($items[1] as $item) {
             $this->assertRegexp('#<ul[^>]*?class="foo"[^>]*>.*?(<li>' . $item . ')#s', $list);
         }
-
     }
 
     /**
@@ -217,5 +216,14 @@ class HtmlListTest extends \PHPUnit_Framework_TestCase
     public function validateItems($value, $key, $userdata)
     {
         $this->assertContains('<li>' . $value, $userdata);
+    }
+
+    /**
+     * @group ZF2-6063
+     */
+    public function testEmptyItems()
+    {
+        $this->setExpectedException('Zend\View\Exception\InvalidArgumentException');
+        $this->helper->__invoke(array());
     }
 }

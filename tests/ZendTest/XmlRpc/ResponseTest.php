@@ -3,7 +3,7 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
@@ -18,8 +18,8 @@ use Zend\XmlRpc\AbstractValue;
 class ResponseTest extends \PHPUnit_Framework_TestCase
 {
     /**
-     * Zend_XmlRpc_Response object
-     * @var Zend_XmlRpc_Response
+     * Response object
+     * @var Response
      */
     protected $_response;
 
@@ -166,10 +166,10 @@ EOD;
     {
         $sx = new \SimpleXMLElement($xml);
 
-        $this->assertTrue($sx->params ? true : false);
-        $this->assertTrue($sx->params->param ? true : false);
-        $this->assertTrue($sx->params->param->value ? true : false);
-        $this->assertTrue($sx->params->param->value->string ? true : false);
+        $this->assertTrue((bool) $sx->params);
+        $this->assertTrue((bool) $sx->params->param);
+        $this->assertTrue((bool) $sx->params->param->value);
+        $this->assertTrue((bool) $sx->params->param->value->string);
         $this->assertEquals('return value', (string) $sx->params->param->value->string);
     }
 

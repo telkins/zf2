@@ -3,7 +3,7 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
@@ -89,6 +89,12 @@ class ContainerTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('foo', $container->getName());
     }
 
+    public function testPassingNameStartingWithDigitToConstructorInstantiatesContainerWithThatName()
+    {
+        $container = new Container('0foo', $this->manager);
+        $this->assertEquals('0foo', $container->getName());
+    }
+
     public function testUsingOldZF1NameIsStillValid()
     {
         $container = new Container('Zend_Foo', $this->manager);
@@ -108,7 +114,6 @@ class ContainerTest extends \PHPUnit_Framework_TestCase
             'foo bar',
             '_foo',
             '__foo',
-            '0foo',
             '\foo',
             '\\foo'
         );
@@ -537,9 +542,6 @@ class ContainerTest extends \PHPUnit_Framework_TestCase
 
     public function testMultiDimensionalUnset()
     {
-        if (version_compare(PHP_VERSION, '5.3.4') < 0) {
-            $this->markTestSkipped('Known issue on versions of PHP less than 5.3.4');
-        }
         $this->container->foo = array('bar' => 'baz');
         unset($this->container['foo']['bar']);
         $this->assertSame(array(), $this->container->foo);
@@ -554,5 +556,15 @@ class ContainerTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('baz', $container->bar);
         $container->baz = 'boo';
         $this->assertEquals('boo', $storage['foo']['baz']);
+    }
+
+    public function testGetArrayCopyAfterExchangeArray()
+    {
+        $this->container->exchangeArray(array('foo'=>'bar'));
+
+        $contents = $this->container->getArrayCopy();
+
+        $this->assertInternalType('array', $contents);
+        $this->assertArrayHasKey('foo', $contents, "'getArrayCopy' doesn't return exchanged array");
     }
 }

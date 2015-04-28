@@ -3,7 +3,7 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
@@ -16,6 +16,11 @@ class RangeTest extends TestCase
 {
     public function testProvidesInputSpecificationWithDefaultAttributes()
     {
+        if (!extension_loaded('intl')) {
+            // Required by \Zend\I18n\Validator\IsFloat
+            $this->markTestSkipped('ext/intl not enabled');
+        }
+
         $element = new RangeElement();
 
         $inputSpec = $element->getInputSpecification();
@@ -23,7 +28,7 @@ class RangeTest extends TestCase
         $this->assertInternalType('array', $inputSpec['validators']);
 
         $expectedClasses = array(
-            'Zend\I18n\Validator\Float',
+            'Zend\I18n\Validator\IsFloat',
             'Zend\Validator\GreaterThan',
             'Zend\Validator\LessThan',
             'Zend\Validator\Step',
@@ -51,6 +56,11 @@ class RangeTest extends TestCase
 
     public function testProvidesInputSpecificationThatIncludesValidator()
     {
+        if (!extension_loaded('intl')) {
+            // Required by \Zend\I18n\Validator\IsFloat
+            $this->markTestSkipped('ext/intl not enabled');
+        }
+
         $element = new RangeElement();
         $element->setAttributes(array(
             'inclusive' => true,
@@ -64,7 +74,7 @@ class RangeTest extends TestCase
         $this->assertInternalType('array', $inputSpec['validators']);
 
         $expectedClasses = array(
-            'Zend\I18n\Validator\Float',
+            'Zend\I18n\Validator\IsFloat',
             'Zend\Validator\GreaterThan',
             'Zend\Validator\LessThan',
             'Zend\Validator\Step',

@@ -3,7 +3,7 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
@@ -14,6 +14,7 @@ use ErrorException;
 use Zend\Log\Logger;
 use Zend\Log\Processor\Backtrace;
 use Zend\Log\Writer\Mock as MockWriter;
+use Zend\Log\Writer\Stream as StreamWriter;
 use Zend\Log\Filter\Mock as MockFilter;
 use Zend\Stdlib\SplPriorityQueue;
 use Zend\Validator\Digits as DigitsFilter;
@@ -23,6 +24,14 @@ use Zend\Validator\Digits as DigitsFilter;
  */
 class LoggerTest extends \PHPUnit_Framework_TestCase
 {
+    /**
+     * @var Logger
+     */
+    private $logger;
+
+    /**
+     * {@inheritDoc}
+     */
     public function setUp()
     {
         $this->logger = new Logger;
@@ -96,7 +105,7 @@ class LoggerTest extends \PHPUnit_Framework_TestCase
         $writers = $this->logger->getWriters();
         $this->assertInstanceOf('Zend\Stdlib\SplPriorityQueue', $writers);
         $writer = $writers->extract();
-        $this->assertTrue($writer instanceof \Zend\Log\Writer\Null);
+        $this->assertTrue($writer instanceof \Zend\Log\Writer\Noop);
         $writer = $writers->extract();
         $this->assertTrue($writer instanceof \Zend\Log\Writer\Mock);
     }
@@ -104,32 +113,31 @@ class LoggerTest extends \PHPUnit_Framework_TestCase
     public function testAddWriterWithPriority()
     {
         $writer1 = $this->logger->writerPlugin('mock');
-        $this->logger->addWriter($writer1,1);
+        $this->logger->addWriter($writer1, 1);
         $writer2 = $this->logger->writerPlugin('null');
-        $this->logger->addWriter($writer2,2);
+        $this->logger->addWriter($writer2, 2);
         $writers = $this->logger->getWriters();
 
         $this->assertInstanceOf('Zend\Stdlib\SplPriorityQueue', $writers);
         $writer = $writers->extract();
-        $this->assertTrue($writer instanceof \Zend\Log\Writer\Null);
+        $this->assertTrue($writer instanceof \Zend\Log\Writer\Noop);
         $writer = $writers->extract();
         $this->assertTrue($writer instanceof \Zend\Log\Writer\Mock);
-
     }
 
     public function testAddWithSamePriority()
     {
         $writer1 = $this->logger->writerPlugin('mock');
-        $this->logger->addWriter($writer1,1);
+        $this->logger->addWriter($writer1, 1);
         $writer2 = $this->logger->writerPlugin('null');
-        $this->logger->addWriter($writer2,1);
+        $this->logger->addWriter($writer2, 1);
         $writers = $this->logger->getWriters();
 
         $this->assertInstanceOf('Zend\Stdlib\SplPriorityQueue', $writers);
         $writer = $writers->extract();
         $this->assertTrue($writer instanceof \Zend\Log\Writer\Mock);
         $writer = $writers->extract();
-        $this->assertTrue($writer instanceof \Zend\Log\Writer\Null);
+        $this->assertTrue($writer instanceof \Zend\Log\Writer\Noop);
     }
 
     public function testLogging()
@@ -298,6 +306,26 @@ class LoggerTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('foo', $writers[0]->getLogSeparator());
     }
 
+    public function testOptionsWithMockAndProcessor()
+    {
+        $options = array(
+            'writers' => array(
+                'first_writer' => array(
+                    'name' => 'mock',
+                ),
+            ),
+            'processors' => array(
+                'first_processor' => array(
+                    'name' => 'requestid',
+                ),
+            )
+        );
+        $logger = new Logger($options);
+        $processors = $logger->getProcessors()->toArray();
+        $this->assertCount(1, $processors);
+        $this->assertInstanceOf('Zend\Log\Processor\RequestId', $processors[0]);
+    }
+
     public function testAddProcessor()
     {
         $processor = new Backtrace();
@@ -341,7 +369,8 @@ class LoggerTest extends \PHPUnit_Framework_TestCase
         $this->assertFalse(Logger::registerExceptionHandler($this->logger));
 
         // get the internal exception handler
-        $exceptionHandler = set_exception_handler(function ($e) {});
+        $exceptionHandler = set_exception_handler(function ($e) {
+        });
         set_exception_handler($exceptionHandler);
 
         // reset the exception handler
@@ -365,5 +394,124 @@ class LoggerTest extends \PHPUnit_Framework_TestCase
             $this->assertEquals($expectedEvent['message'], $event['message'], 'Unexpected message');
             $this->assertEquals($expectedEvent['file'], $event['extra']['file'], 'Unexpected file');
         }
+    }
+
+    public function testLogExtraArrayKeyWithNonArrayValue()
+    {
+        $stream = fopen("php://memory", "r+");
+        $options = array(
+            'writers' => array(
+                array(
+                    'name'     => 'stream',
+                    'options'  => array(
+                        'stream' => $stream
+                    ),
+                ),
+            ),
+        );
+        $logger = new Logger($options);
+
+        $this->assertInstanceOf('Zend\Log\Logger', $logger->info('Hi', array('extra' => '')));
+        fclose($stream);
+    }
+
+    /**
+     * @group 5383
+     */
+    public function testErrorHandlerWithStreamWriter()
+    {
+        $options      = array('errorhandler' => true);
+        $logger       = new Logger($options);
+        $stream       = fopen('php://memory', 'w+');
+        $streamWriter = new StreamWriter($stream);
+
+        // error handler does not like this feature so turn it off
+        $streamWriter->setConvertWriteErrorsToExceptions(false);
+        $logger->addWriter($streamWriter);
+
+        // we raise two notices - both should be logged
+        echo $test;
+        echo $second;
+
+        rewind($stream);
+        $contents = stream_get_contents($stream);
+        $this->assertContains('test', $contents);
+        $this->assertContains('second', $contents);
+    }
+
+    /**
+     * @runInSeparateProcess
+     */
+    public function testRegisterFatalShutdownFunction()
+    {
+        if (version_compare(PHP_VERSION, '7', 'ge')) {
+            $this->markTestSkipped('PHP7: cannot test as code now raises E_ERROR');
+        }
+
+        $writer = new MockWriter;
+        $this->logger->addWriter($writer);
+
+        $result = Logger::registerFatalErrorShutdownFunction($this->logger);
+        $this->assertTrue($result);
+
+        // check for single error handler instance
+        $this->assertFalse(Logger::registerFatalErrorShutdownFunction($this->logger));
+
+        $self = $this;
+        register_shutdown_function(function () use ($writer, $self, &$caught) {
+            $self->assertEquals(
+                'Call to undefined method ZendTest\Log\LoggerTest::callToNonExistingMethod()',
+                $writer->events[0]['message']
+            );
+        });
+
+        // Temporarily hide errors, because we don't want the fatal error to fail the test
+        @$this->callToNonExistingMethod();
+    }
+
+    /**
+     * @runInSeparateProcess
+     *
+     * @group 6424
+     */
+    public function testRegisterFatalErrorShutdownFunctionHandlesCompileTimeErrors()
+    {
+        if (version_compare(PHP_VERSION, '7', 'ge')) {
+            $this->markTestSkipped('PHP7: cannot test as code now raises E_ERROR');
+        }
+
+        $writer = new MockWriter;
+        $this->logger->addWriter($writer);
+
+        $result = Logger::registerFatalErrorShutdownFunction($this->logger);
+        $this->assertTrue($result);
+
+        // check for single error handler instance
+        $this->assertFalse(Logger::registerFatalErrorShutdownFunction($this->logger));
+
+        $self = $this;
+        register_shutdown_function(function () use ($writer, $self, &$caught) {
+            $self->assertStringMatchesFormat(
+                'syntax error%A',
+                $writer->events[0]['message']
+            );
+        });
+
+        // Temporarily hide errors, because we don't want the fatal error to fail the test
+        @eval('this::code::is::invalid {}');
+    }
+
+    /**
+     * @group ZF2-7238
+     */
+    public function testCatchExceptionNotValidPriority()
+    {
+        $this->setExpectedException(
+            'Zend\Log\Exception\InvalidArgumentException',
+            '$priority must be an integer >= 0 and < 8; received -1'
+        );
+        $writer = new MockWriter();
+        $this->logger->addWriter($writer);
+        $this->logger->log(-1, 'Foo');
     }
 }

@@ -3,17 +3,16 @@
 * Zend Framework (http://framework.zend.com/)
 *
 * @link      http://github.com/zendframework/zf2 for the canonical source repository
-* @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
+* @copyright Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
 * @license   http://framework.zend.com/license/new-bsd New BSD License
 */
 
 namespace ZendTest\Soap;
 
-use Zend\Soap\Wsdl,
-    Zend\Soap\Wsdl\ComplexTypeStrategy;
+use Zend\Soap\Wsdl;
+use Zend\Soap\Wsdl\ComplexTypeStrategy;
 use Zend\Soap\Wsdl\ComplexTypeStrategy\ComplexTypeStrategyInterface;
 
-use Zend\Uri\Uri;
 
 /**
 * Zend_Soap_Server
@@ -53,8 +52,7 @@ class WsdlTestHelper extends \PHPUnit_Framework_TestCase
 
     public function setUp()
     {
-
-        if (empty($this->strategy) OR !($this->strategy instanceof ComplexTypeStrategyInterface)) {
+        if (empty($this->strategy) or !($this->strategy instanceof ComplexTypeStrategyInterface)) {
             $this->strategy = new Wsdl\ComplexTypeStrategy\DefaultComplexType();
         }
 
@@ -75,7 +73,6 @@ class WsdlTestHelper extends \PHPUnit_Framework_TestCase
      */
     public function registerNamespaces($obj, $documentNamespace = null)
     {
-
         if (empty($documentNamespace)) {
             $documentNamespace = $this->defaultServiceUri;
         }
@@ -102,7 +99,7 @@ class WsdlTestHelper extends \PHPUnit_Framework_TestCase
             return;
         }
 
-        if (is_null($element)) {
+        if (null === $element) {
             $element = $this->wsdl->toDomDocument()->documentElement;
         }
 

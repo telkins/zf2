@@ -3,7 +3,7 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
@@ -12,7 +12,7 @@ namespace ZendTest\View\Helper;
 use Zend\View\Helper;
 
 /**
- * Test class for Zend_View_Helper_Cycle.
+ * Test class for Zend\View\Helper\Cycle.
  *
  * @group      Zend_View
  * @group      Zend_View_Helper
@@ -20,7 +20,7 @@ use Zend\View\Helper;
 class CycleTest extends \PHPUnit_Framework_TestCase
 {
     /**
-     * @var Zend_View_Helper_Cycle
+     * @var Helper\Cycle
      */
     public $helper;
 
@@ -113,7 +113,7 @@ class CycleTest extends \PHPUnit_Framework_TestCase
     {
         $this->helper->assign(array(5, 8, 3));
         $this->assertEquals(5, (string) $this->helper->next());
-        $this->assertEquals(2, (string) $this->helper->__invoke(array(2,38,1),'cycle2')->next());
+        $this->assertEquals(2, (string) $this->helper->__invoke(array(2, 38, 1), 'cycle2')->next());
         $this->assertEquals(8, (string) $this->helper->__invoke()->next());
         $this->assertEquals(38, (string) $this->helper->setName('cycle2')->next());
     }
@@ -123,9 +123,8 @@ class CycleTest extends \PHPUnit_Framework_TestCase
         $expected = array(5,4,2,3);
         $expected2 = array(7,34,8,6);
         for ($i=0;$i<4;$i++) {
-          $this->assertEquals($expected[$i], (string) $this->helper->__invoke($expected)->next());
-          $this->assertEquals($expected2[$i], (string) $this->helper->__invoke($expected2,'cycle2')->next());
+            $this->assertEquals($expected[$i], (string) $this->helper->__invoke($expected)->next());
+            $this->assertEquals($expected2[$i], (string) $this->helper->__invoke($expected2, 'cycle2')->next());
         }
     }
-
 }

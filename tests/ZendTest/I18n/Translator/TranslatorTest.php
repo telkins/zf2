@@ -3,7 +3,7 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
@@ -35,6 +35,10 @@ class TranslatorTest extends TestCase
 
     public function setUp()
     {
+        if (!extension_loaded('intl')) {
+            $this->markTestSkipped('ext/intl not enabled');
+        }
+
         $this->originalLocale = Locale::getDefault();
         $this->translator     = new Translator();
 
@@ -45,7 +49,9 @@ class TranslatorTest extends TestCase
 
     public function tearDown()
     {
-        Locale::setDefault($this->originalLocale);
+        if (extension_loaded('intl')) {
+            Locale::setDefault($this->originalLocale);
+        }
     }
 
     public function testFactoryCreatesTranslator()
@@ -214,6 +220,26 @@ class TranslatorTest extends TestCase
         $this->assertEquals('Message 5 (en) Plural 2', $pl2);
     }
 
+    public function testTranslateNoPlurals()
+    {
+        // Some languages such as Japanese and Chinese does not have plural forms
+        $this->translator->setLocale('ja_JP');
+        $this->translator->addTranslationFile(
+            'phparray',
+            $this->testFilesDir . '/testarray/translation-noplural-ja_JP.php',
+            'default',
+            'ja_JP'
+        );
+
+        $pl0 = $this->translator->translatePlural('Message 9', 'Message 9 Plural', 1);
+        $pl1 = $this->translator->translatePlural('Message 9', 'Message 9 Plural', 2);
+        $pl2 = $this->translator->translatePlural('Message 9', 'Message 9 Plural', 10);
+
+        $this->assertEquals('Message 9 (ja)', $pl0);
+        $this->assertEquals('Message 9 (ja)', $pl1);
+        $this->assertEquals('Message 9 (ja)', $pl2);
+    }
+
     public function testTranslateNonExistantLocale()
     {
         $this->translator->addTranslationFilePattern(
@@ -262,7 +288,7 @@ class TranslatorTest extends TestCase
         $actualEvent = null;
 
         $this->translator->enableEventManager();
-        $this->translator->getEventManager()->attach(Translator::EVENT_MISSING_TRANSLATION, function(EventInterface $event) use (&$actualEvent) {
+        $this->translator->getEventManager()->attach(Translator::EVENT_MISSING_TRANSLATION, function (EventInterface $event) use (&$actualEvent) {
             $actualEvent = $event;
         });
 
@@ -291,13 +317,13 @@ class TranslatorTest extends TestCase
         $doNotTriger = null;
 
         $this->translator->enableEventManager();
-        $this->translator->getEventManager()->attach(Translator::EVENT_MISSING_TRANSLATION, function(EventInterface $event) use (&$trigger) {
+        $this->translator->getEventManager()->attach(Translator::EVENT_MISSING_TRANSLATION, function (EventInterface $event) use (&$trigger) {
             $trigger = true;
         });
-        $this->translator->getEventManager()->attach(Translator::EVENT_MISSING_TRANSLATION, function(EventInterface $event) {
+        $this->translator->getEventManager()->attach(Translator::EVENT_MISSING_TRANSLATION, function (EventInterface $event) {
             return 'EVENT TRIGGERED';
         });
-        $this->translator->getEventManager()->attach(Translator::EVENT_MISSING_TRANSLATION, function(EventInterface $event) use (&$doNotTrigger) {
+        $this->translator->getEventManager()->attach(Translator::EVENT_MISSING_TRANSLATION, function (EventInterface $event) use (&$doNotTrigger) {
             $doNotTrigger = true;
         });
 
@@ -312,7 +338,7 @@ class TranslatorTest extends TestCase
         $actualEvent = null;
 
         $this->translator->enableEventManager();
-        $this->translator->getEventManager()->attach(Translator::EVENT_NO_MESSAGES_LOADED, function(EventInterface $event) use (&$actualEvent) {
+        $this->translator->getEventManager()->attach(Translator::EVENT_NO_MESSAGES_LOADED, function (EventInterface $event) use (&$actualEvent) {
             $actualEvent = $event;
         });
 
@@ -344,13 +370,13 @@ class TranslatorTest extends TestCase
 
         $this->translator->enableEventManager();
         $events = $this->translator->getEventManager();
-        $events->attach(Translator::EVENT_NO_MESSAGES_LOADED, function(EventInterface $event) use (&$trigger) {
+        $events->attach(Translator::EVENT_NO_MESSAGES_LOADED, function (EventInterface $event) use (&$trigger) {
             $trigger = true;
         });
-        $events->attach(Translator::EVENT_NO_MESSAGES_LOADED, function(EventInterface $event) use ($textDomain) {
+        $events->attach(Translator::EVENT_NO_MESSAGES_LOADED, function (EventInterface $event) use ($textDomain) {
             return $textDomain;
         });
-        $events->attach(Translator::EVENT_NO_MESSAGES_LOADED, function(EventInterface $event) use (&$doNotTrigger) {
+        $events->attach(Translator::EVENT_NO_MESSAGES_LOADED, function (EventInterface $event) use (&$doNotTrigger) {
             $doNotTrigger = true;
         });
 

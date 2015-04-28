@@ -3,7 +3,7 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright  Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright  Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license    http://framework.zend.com/license/new-bsd     New BSD License
  */
 namespace ZendTest\Validator;
@@ -14,7 +14,7 @@ use Zend\Validator;
 
 /**
  * @covers     Zend\Validator\IsInstanceOf
- * @copyright  Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright  Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license    http://framework.zend.com/license/new-bsd     New BSD License
  * @group      Zend_Validator
  */
@@ -98,5 +98,13 @@ class IsInstanceOfTest extends \PHPUnit_Framework_TestCase
         $this->assertTrue($validator->isValid(new DateTime()));
         $this->assertFalse($validator->isValid(null));
         $this->assertFalse($validator->isValid($this));
+    }
+
+    public function testPassOptionsWithoutClassNameKey()
+    {
+        $this->setExpectedException('Zend\Validator\Exception\InvalidArgumentException', 'Missing option "className"');
+
+        $options   = array('NotClassNameKey' => 'DateTime');
+        $validator = new Validator\IsInstanceOf($options);
     }
 }

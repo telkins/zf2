@@ -3,19 +3,21 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
 namespace ZendTest\Mvc\View\Console;
 
 use PHPUnit_Framework_TestCase as TestCase;
-use Zend\EventManager\Event;
 use Zend\EventManager\EventManager;
 use Zend\Mvc\MvcEvent;
 use Zend\Mvc\View\Console\DefaultRenderingStrategy;
+use Zend\ServiceManager\ServiceManager;
 use Zend\Stdlib\Response;
 use Zend\View\Model;
+use ZendTest\Console\TestAssets\ConsoleAdapter;
+use ZendTest\ModuleManager\TestAsset\MockApplication;
 
 class DefaultRenderingStrategyTest extends TestCase
 {
@@ -59,7 +61,16 @@ class DefaultRenderingStrategyTest extends TestCase
 
     public function testIgnoresNonConsoleModelNotContainingResultKeyWhenObtainingResult()
     {
+        //Register console service
+        $sm = new ServiceManager();
+        $sm->setService('console', new ConsoleAdapter());
+
+        $mockApplication = new MockApplication;
+        $mockApplication->setServiceManager($sm);
+
         $event    = new MvcEvent();
+        $event->setApplication($mockApplication);
+
         $model    = new Model\ViewModel(array('content' => 'Page not found'));
         $response = new Response();
         $event->setResult($model);

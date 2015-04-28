@@ -3,7 +3,7 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
@@ -30,8 +30,9 @@ class TestClassCache
         return 'foobar_return('.implode(', ', $args) . ') : ' . static::$fooCounter;
     }
 
-    public static function emptyMethod() {}
-
+    public static function emptyMethod()
+    {
+    }
 }
 
 /**
@@ -39,9 +40,8 @@ class TestClassCache
  */
 class ClassCacheTest extends CommonPatternTest
 {
-
     /**
-     * @var Zend\Cache\Storage\StorageInterface
+     * @var \Zend\Cache\Storage\StorageInterface
      */
     protected $_storage;
 
@@ -106,7 +106,7 @@ class ClassCacheTest extends CommonPatternTest
         $firstCounter = TestClassCache::$fooCounter + 1;
 
         ob_start();
-        ob_implicit_flush(false);
+        ob_implicit_flush(0);
         $return = call_user_func_array(array($this->_pattern, $method), $args);
         $data = ob_get_clean();
 
@@ -115,7 +115,7 @@ class ClassCacheTest extends CommonPatternTest
 
         // second call - cached
         ob_start();
-        ob_implicit_flush(false);
+        ob_implicit_flush(0);
         $return = call_user_func_array(array($this->_pattern, $method), $args);
         $data = ob_get_clean();
 

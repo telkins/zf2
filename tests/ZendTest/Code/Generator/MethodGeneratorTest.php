@@ -3,7 +3,7 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
@@ -15,7 +15,6 @@ use Zend\Code\Generator\ValueGenerator;
 use Zend\Code\Reflection\MethodReflection;
 
 /**
- *
  * @group Zend_Code_Generator
  * @group Zend_Code_Generator_Php
  */
@@ -35,6 +34,33 @@ class MethodGeneratorTest extends \PHPUnit_Framework_TestCase
         $param = array_shift($params);
         $this->assertTrue($param instanceof \Zend\Code\Generator\ParameterGenerator,
                           'Failed because $param was not instance of Zend\Code\Generator\ParameterGenerator');
+    }
+
+    public function testMethodParameterMutator()
+    {
+        $methodGenerator = new MethodGenerator();
+
+        $methodGenerator->setParameter('foo');
+        $methodGenerator->setParameter(array('name' => 'bar', 'type' => 'array'));
+        $methodGenerator->setParameter(ParameterGenerator::fromArray(array('name' => 'baz', 'type' => '\stdClass')));
+
+        $params = $methodGenerator->getParameters();
+        $this->assertCount(3, $params);
+
+        /** @var $foo ParameterGenerator */
+        $foo = array_shift($params);
+        $this->assertInstanceOf('Zend\Code\Generator\ParameterGenerator', $foo);
+        $this->assertEquals('foo', $foo->getName());
+
+        $bar = array_shift($params);
+        $this->assertEquals(ParameterGenerator::fromArray(array('name' => 'bar', 'type' => 'array')), $bar);
+
+        /** @var $baz ParameterGenerator */
+        $baz = array_shift($params);
+        $this->assertEquals('baz', $baz->getName());
+
+        $this->setExpectedException('Zend\Code\Generator\Exception\InvalidArgumentException');
+        $methodGenerator->setParameter(new \stdClass());
     }
 
     public function testMethodBodyGetterAndSetter()
@@ -67,6 +93,31 @@ class MethodGeneratorTest extends \PHPUnit_Framework_TestCase
      */
     public function someMethod()
     {
+        /* test test */
+    }
+
+EOS;
+        $this->assertEquals($target, (string) $methodGenerator);
+    }
+
+
+    public function testMethodFromReflectionMultiLinesIndention()
+    {
+        $ref = new MethodReflection('ZendTest\Code\Generator\TestAsset\TestSampleSingleClassMultiLines', 'someMethod');
+
+        $methodGenerator = MethodGenerator::fromReflection($ref);
+        $target = <<<EOS
+    /**
+     * Enter description here...
+     *
+     * @return bool
+     */
+    public function someMethod()
+    {
+        /* test test */
+
+        /* test test */
+
         /* test test */
     }
 
@@ -125,10 +176,7 @@ EOS;
         $methodGenerator->setAbstract(true);
 
         $expected = <<<EOS
-    abstract public function foo(\$one)
-    {
-    }
-
+    abstract public function foo(\$one);
 EOS;
         $this->assertEquals($expected, $methodGenerator->generate());
     }

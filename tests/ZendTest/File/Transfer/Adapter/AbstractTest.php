@@ -3,7 +3,7 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
@@ -12,7 +12,6 @@ namespace ZendTest\File\Transfer\Adapter;
 use Zend\File;
 use Zend\Filter;
 use Zend\Filter\Word;
-use Zend\Loader;
 use Zend\Validator;
 use Zend\Validator\File as FileValidator;
 
@@ -112,7 +111,7 @@ class AbstractTest extends \PHPUnit_Framework_TestCase
 
     public function testAdapterShouldAllowPullingValidatorsByFile()
     {
-        $this->adapter->addValidator('Between', false, false, 'foo');
+        $this->adapter->addValidator('Between', false, array('min' => 1, 'max' => 5), 'foo');
         $validators = $this->adapter->getValidators('foo');
         $this->assertEquals(1, count($validators));
         $validator = array_shift($validators);
@@ -653,14 +652,12 @@ class AbstractTest extends \PHPUnit_Framework_TestCase
             'foo' => array(
                 'ignoreNoFile' => false,
                 'useByteString' => true,
-                'detectInfos' => true))
-            , $this->adapter->getOptions('foo'));
+                'detectInfos' => true)), $this->adapter->getOptions('foo'));
         $this->adapter->setOptions(array('detectInfos' => false));
         $this->assertEquals(array(
             'foo' => array(
                 'ignoreNoFile' => false,
                 'useByteString' => true,
-                'detectInfos' => false))
-            , $this->adapter->getOptions('foo'));
+                'detectInfos' => false)), $this->adapter->getOptions('foo'));
     }
 }

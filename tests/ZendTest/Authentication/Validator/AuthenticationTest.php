@@ -3,21 +3,20 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
-namespace ZendTest\Validator;
+namespace ZendTest\Authentication\Validator;
 
 use Zend\Authentication\Validator\Authentication as AuthenticationValidator;
 use Zend\Authentication\AuthenticationService;
-use Zend\Authentication as Auth;
 use ZendTest\Authentication as AuthTest;
 
 /**
  * @group      Zend_Validator
  */
-class AthenticationTest extends \PHPUnit_Framework_TestCase
+class AuthenticationTest extends \PHPUnit_Framework_TestCase
 {
     protected $validator;
 

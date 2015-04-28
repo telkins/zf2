@@ -3,7 +3,7 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
@@ -15,14 +15,14 @@ use Zend\Http\Header\GenericHeader;
 
 class RequestTest extends \PHPUnit_Framework_TestCase
 {
-
     public function testRequestFromStringFactoryCreatesValidRequest()
     {
-        $string = "GET /foo HTTP/1.1\r\n\r\nSome Content";
+        $string = "GET /foo?myparam=myvalue HTTP/1.1\r\n\r\nSome Content";
         $request = Request::fromString($string);
 
         $this->assertEquals(Request::METHOD_GET, $request->getMethod());
-        $this->assertEquals('/foo', $request->getUri());
+        $this->assertEquals('/foo?myparam=myvalue', $request->getUri());
+        $this->assertEquals('myvalue', $request->getQuery()->get('myparam'));
         $this->assertEquals(Request::VERSION_11, $request->getVersion());
         $this->assertEquals('Some Content', $request->getContent());
     }
@@ -67,7 +67,7 @@ class RequestTest extends \PHPUnit_Framework_TestCase
         $this->assertSame('bar', $request->getFiles('foo'));
 
         $headers = new Headers();
-        $h = new GenericHeader('foo','bar');
+        $h = new GenericHeader('foo', 'bar');
         $headers->addHeader($h);
 
         $request->setHeaders($headers);
@@ -254,10 +254,56 @@ class RequestTest extends \PHPUnit_Framework_TestCase
                 if ($providerContext) {
                     $return[] = array($cValue);
                 } else {
-                    $return[strtolower($cValue)] = ($trueMethod == $cValue) ? true : false;
+                    $return[strtolower($cValue)] = ($trueMethod == $cValue);
                 }
             }
         }
         return $return;
+    }
+
+    public function testCustomMethods()
+    {
+        $request = new Request();
+        $this->assertTrue($request->getAllowCustomMethods());
+        $request->setMethod('xcustom');
+
+        $this->assertEquals('XCUSTOM', $request->getMethod());
+    }
+
+    public function testDisallowCustomMethods()
+    {
+        $request = new Request();
+        $request->setAllowCustomMethods(false);
+
+        $this->setExpectedException(
+            'Zend\Http\Exception\InvalidArgumentException',
+            'Invalid HTTP method passed'
+        );
+
+        $request->setMethod('xcustom');
+    }
+
+    public function testCustomMethodsFromString()
+    {
+        $request = Request::fromString('X-CUS_TOM someurl');
+        $this->assertTrue($request->getAllowCustomMethods());
+
+        $this->assertEquals('X-CUS_TOM', $request->getMethod());
+    }
+
+    public function testDisallowCustomMethodsFromString()
+    {
+        $this->setExpectedException(
+            'Zend\Http\Exception\InvalidArgumentException',
+            'A valid request line was not found in the provided string'
+        );
+
+        $request = Request::fromString('X-CUS_TOM someurl', false);
+    }
+
+    public function testAllowCustomMethodsFlagIsSetByFromString()
+    {
+        $request = Request::fromString('GET someurl', false);
+        $this->assertFalse($request->getAllowCustomMethods());
     }
 }

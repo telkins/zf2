@@ -22,7 +22,14 @@
         <listener class="ZendTest\Db\IntegrationTestListener" file="./ZendTest/Db/IntegrationTestListener.php" />
     </listeners>
 
+    <filter>
+        <whitelist addUncoveredFilesFromWhitelist="true">
+            <directory suffix=".php">./../library</directory>
+        </whitelist>
+    </filter>
+
     <php>
+        <ini name="date.timezone" value="UTC"/>
 
         <!-- Integration Test Variables -->
         <!--<var name="ZEND_DB_ADAPTER_DRIVER_MYSQL_HOSTNAME" value="" />-->

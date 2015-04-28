@@ -3,7 +3,7 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
@@ -38,7 +38,11 @@ class EncryptTest extends \PHPUnit_Framework_TestCase
         $valuesExpected = array(
             'STRING' => 'STRING',
             'ABC1@3' => 'ABC1@3',
-            'A b C'  => 'A B C'
+            'A b C'  => 'A B C',
+            1        => 1,
+            -1       => -1,
+            1.0      => 1.0,
+            -1.0     => -1.0,
         );
 
         $enc = $filter->getEncryption();
@@ -122,9 +126,11 @@ PIDs9E7uuizAKDhRRRvho8BS
         $filter = new EncryptFilter();
         $filter->setAdapter('Openssl');
         $this->assertEquals('Openssl', $filter->getAdapter());
+        $this->assertInstanceOf('Zend\Filter\Encrypt\EncryptionAlgorithmInterface', $filter->getAdapterInstance());
 
         $filter->setAdapter('BlockCipher');
         $this->assertEquals('BlockCipher', $filter->getAdapter());
+        $this->assertInstanceOf('Zend\Filter\Encrypt\EncryptionAlgorithmInterface', $filter->getAdapterInstance());
 
         $this->setExpectedException('Zend\Filter\Exception\InvalidArgumentException', 'does not implement');
         $filter->setAdapter('\ZendTest\Filter\TestAdapter2');
@@ -142,6 +148,35 @@ PIDs9E7uuizAKDhRRRvho8BS
         $this->setExpectedException('\Zend\Filter\Exception\BadMethodCallException', 'Unknown method');
         $filter = new EncryptFilter();
         $filter->getUnknownMethod();
+    }
+
+    public function returnUnfilteredDataProvider()
+    {
+        return array(
+            array(null),
+            array(new \stdClass()),
+            array(array(
+                'encrypt me',
+                'encrypt me too, please'
+            ))
+        );
+    }
+
+    /**
+     * @dataProvider returnUnfilteredDataProvider
+     * @return void
+     */
+    public function testReturnUnfiltered($input)
+    {
+        if (!extension_loaded('mcrypt')) {
+            $this->markTestSkipped('Mcrypt extension not installed');
+        }
+
+        $encrypt = new EncryptFilter(array('adapter' => 'BlockCipher', 'key' => 'testkey'));
+        $encrypt->setVector('1234567890123456890');
+
+        $encrypted = $encrypt->filter($input);
+        $this->assertEquals($input, $encrypted);
     }
 }
 

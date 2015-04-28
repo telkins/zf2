@@ -3,7 +3,7 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
@@ -14,6 +14,7 @@ use Zend\Form\Element;
 use Zend\Form\Form;
 use Zend\Form\Fieldset;
 use Zend\InputFilter\InputFilter;
+use Zend\Stdlib\Hydrator;
 
 class FieldsetTest extends TestCase
 {
@@ -85,6 +86,21 @@ class FieldsetTest extends TestCase
     {
         $form = new TestAsset\FormCollection();
         $form->populateValues(array('fieldsets' => array()));
+    }
+
+    public function testExtractOnAnEmptyTraversable()
+    {
+        $form = new TestAsset\FormCollection();
+        $form->populateValues(new \ArrayObject(array('fieldsets' => new \ArrayObject())));
+    }
+
+    public function testTraversableAcceptedValueForFieldset()
+    {
+        $subValue = new \ArrayObject(array('field' => 'value'));
+        $subFieldset = new TestAsset\ValueStoringFieldset('subFieldset');
+        $this->fieldset->add($subFieldset);
+        $this->fieldset->populateValues(array('subFieldset' => $subValue));
+        $this->assertEquals($subValue, $subFieldset->getStoredValue());
     }
 
     public function testPopulateValuesWithInvalidElementRaisesException()
@@ -437,6 +453,16 @@ class FieldsetTest extends TestCase
         $this->assertEquals('bar', $option);
     }
 
+    public function testSetOptionAllowedObjectBindingClass()
+    {
+        $this->fieldset->setOptions(array(
+                                         'allowed_object_binding_class' => 'bar'
+                                    ));
+        $option = $this->fieldset->getOption('allowed_object_binding_class');
+
+        $this->assertEquals('bar', $option);
+    }
+
     /**
      * @expectedException Zend\Form\Exception\InvalidElementException
      */
@@ -451,9 +477,99 @@ class FieldsetTest extends TestCase
         $this->assertNull($bindValues);
     }
 
+    public function testBindValuesSkipDisabled()
+    {
+        $object = new \stdClass();
+        $object->disabled = 'notModified';
+        $object->not_disabled = 'notModified';
+
+        $textInput = new Element\Text('not_disabled');
+        $disabledInput = new Element\Text('disabled');
+        $disabledInput->setAttribute('disabled', 'disabled');
+
+        $form = new Form();
+        $form->add($textInput);
+        $form->add($disabledInput);
+
+        $form->setObject($object);
+        $form->setHydrator(new \Zend\Stdlib\Hydrator\ObjectProperty());
+        $form->bindValues(array('not_disabled' => 'modified', 'disabled' => 'modified'));
+
+        $this->assertEquals('modified', $object->not_disabled);
+        $this->assertEquals('notModified', $object->disabled);
+    }
+
+    /**
+     * @group 7109
+     */
+    public function testBindValuesDoesNotSkipElementsWithFalsyDisabledValues()
+    {
+        $object = new \stdClass();
+        $object->disabled = 'notModified';
+        $object->not_disabled = 'notModified';
+
+        $textInput = new Element\Text('not_disabled');
+        $disabledInput = new Element\Text('disabled');
+        $disabledInput->setAttribute('disabled', '');
+
+        $form = new Form();
+        $form->add($textInput);
+        $form->add($disabledInput);
+
+        $form->setObject($object);
+        $form->setHydrator(new \Zend\Stdlib\Hydrator\ObjectProperty());
+        $form->bindValues(array('not_disabled' => 'modified', 'disabled' => 'modified'));
+
+        $this->assertEquals('modified', $object->not_disabled);
+        $this->assertEquals('modified', $object->disabled);
+    }
+
     public function testSetObjectWithStringRaisesException()
     {
         $this->setExpectedException('Zend\Form\Exception\InvalidArgumentException');
         $this->fieldset->setObject('foo');
+    }
+
+    public function testShouldValidateAllowObjectBindingByClassname()
+    {
+        $object = new \stdClass();
+        $this->fieldset->setAllowedObjectBindingClass('stdClass');
+        $allowed = $this->fieldset->allowObjectBinding($object);
+
+        $this->assertTrue($allowed);
+    }
+
+    public function testShouldValidateAllowObjectBindingByObject()
+    {
+        $object = new \stdClass();
+        $this->fieldset->setObject($object);
+        $allowed = $this->fieldset->allowObjectBinding($object);
+
+        $this->assertTrue($allowed);
+    }
+
+    /**
+     * @group 6585
+     * @group 6614
+     */
+    public function testBindValuesPreservesNewValueAfterValidation()
+    {
+        $form = new Form();
+        $form->add(new Element('foo'));
+        $form->setHydrator(new Hydrator\ObjectProperty);
+
+        $object      = new \stdClass();
+        $object->foo = 'Initial value';
+        $form->bind($object);
+
+        $form->setData(array(
+            'foo' => 'New value'
+        ));
+
+        $this->assertSame('New value', $form->get('foo')->getValue());
+
+        $form->isValid();
+
+        $this->assertSame('New value', $form->get('foo')->getValue());
     }
 }
